@@ -1,0 +1,96 @@
+print("Booting NebulaOS Terminal...")
+
+gui_setup(800, 600, "NebulaOS Terminal v1.0")
+gui_load_font("hack.ttf", 32)
+
+set current_input = ""
+set prompt = "root@nebula:~# "
+set font_size = 14
+
+# Setup History
+set history = os.unescape("NebulaOS Kernel Loaded...\nReady for command.\n")
+
+# [NEW] Variable to store manual user scroll
+set manual_scroll = 0
+
+while gui_running() {
+    gui_start()
+    gui_clear("black")
+
+    # --- 1. KEYBOARD INPUT ---
+    set key = gui_get_char()
+    while key > 0 {
+        if key >= 33 { if key <= 126 { set current_input = current_input + char(key) } }
+        set key = gui_get_char()
+    }
+    if gui_is_key_pressed("SPACE") { set current_input = current_input + " " }
+    if gui_is_key_pressed("BACKSPACE") { set current_input = str.pop(current_input) }
+
+    # --- 2. ENTER / CMD EXECUTION ---
+    if gui_is_key_pressed("ENTER") {
+        if current_input != "" {
+            # Reset scroll to 0 on every enter (return to bottom)
+            set manual_scroll = 0 
+            
+            if current_input == "clear" { 
+                set history = os.unescape("NebulaOS Terminal (Reset).\n") 
+            } else {
+                if str.starts_with(current_input, "cd ") {
+                    set target = str.substr(current_input, 3)
+                    os.chdir(target)
+                    set history = history + os.unescape(prompt + current_input + "\n(Directory Changed)\n")
+                } else {
+                    set output = os.exec(current_input)
+                    set log = prompt + current_input + "\n" + output + "\n"
+                    set history = history + os.unescape(log)
+                }
+            }
+            set current_input = ""
+        }
+    }
+
+    # --- 3. MOUSE SCROLL LOGIC [NEW] ---
+    
+    # Get scroll input (-1, 0, or 1 usually)
+    set wheel = gui.get_mouse_wheel()
+    
+    # Scroll speed (40 pixels per step)
+    set scroll_speed = 40
+    
+    if wheel != 0 {
+        # Add to manual_scroll
+        set manual_scroll = manual_scroll + (wheel * scroll_speed)
+    }
+
+    # Prevent scrolling past the bottom (bottom limit is 0)
+    if manual_scroll < 0 {
+        set manual_scroll = 0
+    }
+
+    # --- 4. RENDER CALCULATION ---
+    
+    set text_h = gui.measure_height(history, font_size)
+    set start_y = 10
+    set bottom_limit = 550 # Position above the input bar
+    
+    # Auto-Bottom Logic (Default)
+    if text_h > 540 {
+        # If text exceeds the screen, base position is hidden above
+        set start_y = bottom_limit - text_h
+    }
+    
+    # Apply Manual Scroll
+    # Final Position = Base Position + User Scroll
+    set final_y = start_y + manual_scroll
+
+    # --- 5. RENDER ---
+    gui_text(10, final_y, history, "green", font_size)
+    
+    # Input bar & Prompt (Topmost layer)
+    gui_rect(0, 560, 800, 40, "gray")
+    gui_text(10, 570, prompt + current_input + "_", "black", font_size)
+
+    gui_present()
+}
+
+gui_close()

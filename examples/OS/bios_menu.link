@@ -1,0 +1,59 @@
+# File: bios_menu.link
+# === NEBULA OS BOOT MANAGER ===
+
+func drawMenu(selected) {
+    term.clear()
+    term.move(3, 5)
+    print(term.color("cyan") + "=== NEBULA BOOTLOADER v1.0 ===" + term.reset())
+    
+    term.move(5, 5)
+    if selected == 1 { print(term.color("green") + "> Start NebulaOS" + term.reset()) }
+    else             { print("  Start NebulaOS") }
+
+    term.move(6, 5)
+    if selected == 2 { print(term.color("yellow") + "> Recovery Mode" + term.reset()) }
+    else             { print("  Recovery Mode") }
+
+    term.move(7, 5)
+    if selected == 3 { print(term.color("red") + "> Shutdown" + term.reset()) }
+    else             { print("  Shutdown") }
+
+    term.move(10, 5)
+    print("Controls: (w) Up, (s) Down, (q) Select")
+}
+
+set choice = 1
+set running = true
+
+while running {
+    drawMenu(choice)
+    set key = term.getch()
+
+    if key == "w" {
+        set choice = choice - 1
+        if choice < 1 { set choice = 3 }
+    }
+    elif key == "s" {
+        set choice = choice + 1
+        if choice > 3 { set choice = 1 }
+    }
+    elif key == "q" {
+        set running = false # Exit loop to execute choice
+    }
+}
+
+term.clear()
+
+# === BOOT SEQUENCE LOGIC ===
+if choice == 1 {
+    # Load the Kernel Animation
+    import kernel
+} 
+elif choice == 2 {
+    # Load Recovery Tools
+    import recovery
+} 
+else {
+    term.move(10, 10)
+    print(term.color("red") + "System Halted." + term.reset())
+}

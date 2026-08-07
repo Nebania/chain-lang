@@ -1,0 +1,30 @@
+# examples/text_tool.link
+
+print("=== STRING MANIPULATION TEST ===")
+
+set raw_command = "   ExiT  "
+print("Raw Input  : '" + raw_command + "'")
+
+# 1. Clean up input (Trim + Lowercase)
+set clean_cmd = str.trim(raw_command)
+set clean_cmd = str.lower(clean_cmd)
+
+print("Clean CMD  : '" + clean_cmd + "'")
+
+if clean_cmd == "exit" {
+    print(">> Command recognized: EXIT SYSTEM")
+}
+
+print("")
+print("=== PARSING DATE ===")
+set date_str = "2026-01-18"
+
+# 2. Extract Year, Month, Day using Substring
+# str.sub(string, start_index, length)
+set year = str.sub(date_str, 0, 4)
+set month = str.sub(date_str, 5, 2)
+set day = str.sub(date_str, 8, 2)
+
+print("Year  : " + year)
+print("Month : " + month)
+print("Day   : " + day)

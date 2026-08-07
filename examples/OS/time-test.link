@@ -1,0 +1,11 @@
+print("=== TIME BOMB ===")
+print("Explode in ...")
+
+set i = 3
+while (i > 0) {
+    print(i)
+    time.sleep(1000)  # Tidur 1000ms (1 detik)
+    set i = i - 1
+}
+
+print("BOOOOM! 💥")

@@ -1,0 +1,20 @@
+# Check Linux Kernel
+set kernel = os.exec("uname -r")
+print("Kernel Version: " + kernel)
+
+# Check whether we are on Linux or not
+set sysinfo = os.exec("uname -a")
+
+if str.contains(sysinfo, "Linux")
+    print("Sistem terdeteksi: LINUX")
+    
+    # Check user
+    set user = os.exec("whoami")
+    print("Current User: " + user)
+else
+    print("Bukan Linux?")
+
+# Calculate string length
+set text = "NebulaOS"
+print("Panjang 'NebulaOS' adalah:")
+print(len(text))

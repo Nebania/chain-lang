@@ -1,0 +1,68 @@
+# === NEBULA TASK MANAGER v1.0 ===
+
+# 1. Initial Setup
+set filename = "tasks.db"
+set tasks = []
+
+# 2. Load Data Function (Read file when application starts)
+if io.exists(filename) {
+    set content = io.read(filename)
+    # Remove extra whitespace and split lines into a List
+    if str.len(content) > 0 {
+        set tasks = str.split(str.trim(content), "\n")
+    }
+}
+
+# 3. Main Application Loop (Menu)
+while true {
+    term.clear()
+    print(term.color("cyan") + "=== MY TO-DO LIST ===" + term.reset())
+    
+    # Display Tasks
+    if len(tasks) == 0 {
+        print(term.color("yellow") + "(No tasks yet)" + term.reset())
+    } else {
+        set i = 0
+        for t in tasks {
+            print("[" + i + "] " + t)
+            set i = i + 1
+        }
+    }
+    
+    print("")
+    print("1. Add Task")
+    print("2. Delete Task")
+    print("3. Save & Exit")
+    
+    # User Input
+    set choice = input("Select [1-3]: ")
+    
+    # --- MENU LOGIC ---
+    
+    if choice == "1" {
+        set new_task = input("Enter task name: ")
+        if str.len(new_task) > 0 {
+            list.add(tasks, new_task)
+        }
+    }
+    elif choice == "2" {
+        set idx_str = input("Enter index to delete: ")
+        # Cast string to int so it can be used by list.remove
+        set idx = int(idx_str)
+        
+        # Simple validation (in the original C++ version,
+        # bounds checking is already handled)
+        list.remove(tasks, idx)
+    }
+    elif choice == "3" {
+        print("Saving data...")
+        # Merge List into one large String separated by newline
+        set data_to_save = str.merge(tasks, "\n")
+        
+        # Write to file
+        io.write(filename, data_to_save)
+        
+        print(term.color("green") + "Data saved! Goodbye." + term.reset())
+        break
+    }
+}

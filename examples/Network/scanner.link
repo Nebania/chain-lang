@@ -1,0 +1,42 @@
+# examples/scanner.link
+print("=== NEBULA PORT SCANNER ===")
+
+# Target: Google DNS (8.8.8.8)
+set target = "8.8.8.8"
+print("Target: " + target)
+
+# Ports to scan (DNS, HTTP, HTTPS)
+set ports = [53, 80, 443, 8080]
+
+for port in ports {
+    # 1. Create Socket
+    set sock = net.socket()
+    
+    if sock < 0 {
+        print("Error: Cannot create socket")
+        break
+    }
+    
+    # 2. Try Connect
+    # print("Scanning port " + port + "...")
+    set result = net.connect(sock, target, port)
+    
+    if result {
+        print(term.color("green") + "[OPEN] Port " + port + " is open!" + term.reset())
+        
+        # (Optional) Send data if type of HTTP (Port 80)
+        if port == 80 {
+            net.send(sock, "GET / HTTP/1.1\r\nHost: 8.8.8.8\r\n\r\n")
+            # set reply = net.recv(sock)
+            # print("Reply: " + reply)
+        }
+        
+    } else {
+        print(term.color("red") + "[CLOSED] Port " + port + term.reset())
+    }
+    
+    # 3. Always close socket!
+    net.close(sock)
+}
+
+print("Scan finished.")

@@ -1,0 +1,20 @@
+print("=== TEST BREAK & CONTINUE ===")
+
+set i = 0
+while i < 10 {
+    set i = i + 1
+    
+    if i == 3 {
+        print("Skipping 3...")
+        continue
+    }
+    
+    if i == 7 {
+        print("Breaking at 7!")
+        break
+    }
+    
+    print("Number: " + i)
+}
+
+print("Loop finished.")

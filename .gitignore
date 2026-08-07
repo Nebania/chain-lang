@@ -1,0 +1,5 @@
+link
+*.o
+*.exe
+build/
+error.txt

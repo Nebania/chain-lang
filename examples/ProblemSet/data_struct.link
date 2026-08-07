@@ -1,0 +1,29 @@
+print("=== DATA STRUCTURE TEST ===")
+
+# 1. LIST MANIPULATION
+set tasks = ["Booting", "Loading Kernel", "Checking Disk", "Error"]
+print("Initial Tasks: " + tasks)
+
+# Remove 'Error' (Index 3)
+list.remove(tasks, 3)
+print("After Remove : " + tasks)
+
+# Pop the last item ('Checking Disk')
+set last = list.pop(tasks)
+print("Popped Item  : " + last)
+print("Final List   : " + tasks)
+
+print("")
+print("=== DICTIONARY MANIPULATION ===")
+
+# 2. DICT MANIPULATION
+set config = {"ver": "1.0", "theme": "dark", "debug": "true"}
+print("Config Keys  : " + dict.keys(config))
+
+if dict.has(config, "theme") {
+    print("Theme found: " + config["theme"])
+}
+
+# Remove 'debug'
+dict.remove(config, "debug")
+print("After Remove Keys: " + dict.keys(config))

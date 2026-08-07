@@ -1,0 +1,121 @@
+# snake.link
+
+# if you want to see all of process on your terminal, but if you dont give "#" 
+# gui_debug() 
+
+gui_setup(400, 400, "Nebula Snake")
+
+set cell_size = 20
+set score = 0
+
+# Snake representation of a list of dicts
+set snake = [{"x": 10, "y": 10}, {"x": 10, "y": 11}, {"x": 10, "y": 12}]
+
+# Move Direction (dx, dy) - Move Upwards
+set dx = 0
+set dy = -1
+
+# Initial Food Position
+set food = {"x": math.randint(0, 19), "y": math.randint(0, 19)}
+
+set last_move_time = gui_get_time()
+set move_delay = 0.15 
+
+# --- Initial Input Keys ---
+set moved_this_turn = 0 
+
+gui_start()
+
+while gui_running() {
+
+    gui_start()
+    gui_clear("black")
+
+    # 1. HANDLING INPUT 
+    if moved_this_turn == 0 {
+        if gui_is_key_pressed("UP") {
+            if dy == 0 { set dx = 0; set dy = -1; set moved_this_turn = 1 }
+        }
+        elif gui_is_key_pressed("DOWN") {
+            if dy == 0 { set dx = 0; set dy = 1; set moved_this_turn = 1 }
+        }
+        elif gui_is_key_pressed("LEFT") {
+            if dx == 0 { set dx = -1; set dy = 0; set moved_this_turn = 1 }
+        }
+        elif gui_is_key_pressed("RIGHT") {
+            if dx == 0 { set dx = 1; set dy = 0; set moved_this_turn = 1 }
+        }
+    }
+
+    # 2. GAME LOGIC
+    set current_time = gui_get_time()
+    
+    if (current_time - last_move_time) > move_delay {
+        
+        set head_x = snake[0]["x"] + dx
+        set head_y = snake[0]["y"] + dy
+
+        # Wrap Around
+        if head_x < 0 { set head_x = 19 }
+        if head_x > 19 { set head_x = 0 }
+        if head_y < 0 { set head_y = 19 }
+        if head_y > 19 { set head_y = 0 }
+
+        set new_head = {"x": head_x, "y": head_y}
+
+        # If snake eats it self
+        set is_dead = false
+        for segment in snake {
+            if segment["x"] == head_x {
+                if segment["y"] == head_y {
+                    set is_dead = true
+                }
+            }
+        }
+
+        if is_dead {
+            print("Game Over! Score: " + score)
+            gui_quit()
+        }
+
+        # Insert New Head
+        list.insert(snake, 0, new_head)
+
+        # Eating Logic
+        set ate_food = 0
+        if head_x == food["x"] {
+            if head_y == food["y"] {
+                set score = score + 10
+                set food = {"x": math.randint(0, 19), "y": math.randint(0, 19)}
+                set move_delay = move_delay * 0.95 
+                set ate_food = 1
+            }
+        }
+
+        # if it does not eat, snake length stays the same
+        if ate_food == 0 {
+            list.pop(snake) 
+        }
+
+        set last_move_time = current_time
+        
+        # ---  Input Key Opens after snake moving ---
+        set moved_this_turn = 0
+    }
+
+    # 3. RENDERING
+    # Food (Red Color)
+    gui_rect(food["x"] * cell_size, food["y"] * cell_size, cell_size, cell_size, "red")
+
+    # Snake (Green Color)
+    for segment in snake {
+        gui_rect(segment["x"] * cell_size, segment["y"] * cell_size, cell_size - 1, cell_size - 1, "green")
+    }
+
+    # Score Table
+    gui_text(10, 10, "Score: " + score, "white", 20)
+
+    gui_present()
+}
+
+gui_close()

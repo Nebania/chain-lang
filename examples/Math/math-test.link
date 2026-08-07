@@ -1,0 +1,26 @@
+print("=== MATH LIBRARY TEST ===")
+
+# 1. PI const
+set pi = math.pi()
+print("PI Value : " + pi)
+
+# 2. Trigonometry (Sin 90 degrees / PI/2 radian)
+set angle = pi / 2
+print("Sin(PI/2): " + math.sin(angle)) # Must be 1.0
+
+# 3. squareroot and pqwer
+set base = 5
+set power = 3
+print("5^3      : " + math.pow(base, power)) # Must be 125
+print("Sqrt(144): " + math.sqrt(144))        # Must be 12
+
+# 4. Absolute 
+set negative = -99.5
+print("Abs(-99.5): " + math.abs(negative))
+
+# 5. Complex Calculating process
+# Pythagoras formula : c = sqrt(a^2 + b^2)
+set a = 3
+set b = 4
+set c = math.sqrt(math.pow(a, 2) + math.pow(b, 2))
+print("Pythagoras (3,4,?): " + c)

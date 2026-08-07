@@ -1,0 +1,26 @@
+print("=== CHAIN-LANG CLIENT ===")
+set ip = "127.0.0.1"
+set port = 8080
+
+print("Connecting to " + ip + ":" + port + "...")
+
+# 1. Connect to your Server
+set sock = net.connect(ip, port)
+
+if sock == -1 {
+    print("[ERROR] Connection Failed! Is server running?")
+} else {
+    print("[SUCCESS] Connected to Server!")
+    
+    # 2. Got a MSG
+    set msg = net.recv(sock)
+    print("Server says: " + msg)
+    
+    # 3. Send it back
+    print("Sending reply...")
+    net.send(sock, "Hello Server! this is from real Client Chain-Lang .")
+    
+    # 4. Close
+    net.close(sock)
+    print("Disconnected.")
+}

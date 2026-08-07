@@ -1,0 +1,57 @@
+# === NEBULA SHELL v1.0 ===
+
+term.clear()
+print(term.color("cyan") + "Welcome to Nebula Shell." + term.reset())
+print("Type 'exit' to quit.")
+
+set active = true
+
+while active {
+    # 1. Show Prompt (example: /home/user/ > )
+    set current_dir = os.cwd()
+    
+    # Print green-colored prompt without newline
+    # (later we can use io.write to stdout,
+    # but for now we rely on input prompt)
+    
+    set prompt_text = term.color("green") + current_dir + "> " + term.reset()
+    set cmd_line = input(prompt_text)
+
+    # 2. Command Parsing
+    if str.len(cmd_line) > 0 {
+        set parts = str.split(cmd_line, " ")
+        # Take the first command (example: "cd", "ls", "help")
+        # Currently fetched manually from index 0 (since list[0] is limited)
+        # Using simple string checks or if/else logic
+        
+        # NOTE: Because list indexing support is still limited in the parser,
+        # we check the raw string first or use simple string tricks.
+        # For now, we assume basic logic support.
+        
+        # --- COMMANDS ---
+        
+        if cmd_line == "exit" {
+            set active = false
+        }
+        elif str.contains(cmd_line, "cd ") {
+            # Extract path after space (manual trim of "cd ")
+            # This simulates substring behavior
+            set target = str.replace(cmd_line, "cd ", "") 
+            os.chdir(target)
+        }
+        elif cmd_line == "clear" {
+            term.clear()
+        }
+        elif cmd_line == "help" {
+            print("Available commands: cd, ls, clear, exit, help")
+        }
+        else {
+            # If not an internal shell command, pass it to the system (ls, git, etc)
+            os.exec(cmd_line)
+        }
+    }
+}
+
+print("Logging out...")
+time.sleep(500)
+term.clear()

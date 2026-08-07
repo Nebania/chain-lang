@@ -1,0 +1,22 @@
+# File: recovery.link
+term.clear()
+term.color("yellow")
+print("=== NEBULA RECOVERY MODE ===")
+term.reset()
+
+print("Mounting rescue disk...")
+time.sleep(500)
+
+print("Checking file system integrity...")
+# Simulate checking files
+set files = ["kernel.sys", "drivers.dat", "user.conf"]
+
+for f in files {
+    io.write("Analyzing " + f + "...", "") # Print without newline (logic simulation)
+    time.sleep(300)
+    print(" [OK]")
+}
+
+print("\n System seems healthy.")
+print("Press any key to reboot...")
+term.getch()

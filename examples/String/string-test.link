@@ -1,0 +1,55 @@
+# === NEBULA OS: STRING LIBRARY TEST ===
+
+# 1. Configuration Setup (Multiline Dictionary Test)
+set config = {
+    "app_name": "StringTester",
+    "version": "1.0",
+    "divider": "--------------------------------"
+}
+
+print("Running " + config["app_name"] + " v" + config["version"])
+print(config["divider"])
+
+# 2. TRIM TEST (Remove leading/trailing spaces)
+set raw_input = "    User: Admin    "
+print("[TEST 1] Trim")
+print("Original : '" + raw_input + "'")
+set clean_input = str.trim(raw_input)
+print("Result   : '" + clean_input + "'")
+
+if clean_input == "User: Admin"
+    print("Status   : PASSED")
+else
+    print("Status   : FAILED")
+print(config["divider"])
+
+# 3. REPLACE TEST (Replace text)
+set message = "Error: Disk Full. Error: Retry."
+print("[TEST 2] Replace")
+print("Original : " + message)
+
+# Replace all occurrences of "Error" with "Warning"
+set fixed_msg = str.replace(message, "Error", "Warning")
+print("Result   : " + fixed_msg)
+print(config["divider"])
+
+# 4. SPLIT TEST (Split string into List)
+set csv_data = "192.168.1.1,8080,active,admin"
+print("[TEST 3] Split (CSV Parsing)")
+print("Data     : " + csv_data)
+
+set data_list = str.split(csv_data, ",")
+print("List Size: " + len(data_list))
+print("IP Addr  : " + data_list[0])
+print("Port     : " + data_list[1])
+print("Status   : " + data_list[2])
+print(config["divider"])
+
+# 5. MERGE TEST (Join List into String)
+print("[TEST 4] Merge (Joining List)")
+# Use the list generated from the split above
+set new_format = str.merge(data_list, " | ")
+print("Result   : " + new_format)
+
+print(config["divider"])
+print("All Tests Completed.")

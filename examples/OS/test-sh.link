@@ -1,0 +1,4 @@
+app "NebulaTest" 
+    sh "whoami"
+    sh "ls -la"
+    print "Done!" 

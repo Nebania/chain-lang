@@ -1,0 +1,34 @@
+term.clear()
+print(term.color("red") + "=== THE MATRIX ===" + term.reset())
+time.sleep(1000)
+term.clear()
+
+# Infinite loop (press Ctrl+C to stop)
+while true {
+    # 1. Determine random position
+    # We assume terminal width is around 80–100 characters
+    set col = math.randint(1, 80)
+    set row = math.randint(1, 20)
+    
+    # 2. Determine random character (binary simulation 0/1)
+    set char_code = math.randint(0, 1)
+    
+    # 3. Move cursor and print
+    term.move(row, col)
+    
+    # Color effect: sometimes bright (bold), sometimes dim
+    if math.random() > 0.5 {
+        # Bright green (bold) -> using a bit of manual ANSI code: \033[1;32m
+        # Using term.color("green") is also fine
+        io.write("stdout", term.color("green") + char_code)
+    } else {
+        # Dark green (normal)
+        io.write("stdout", "\033[0;32m" + char_code)
+    }
+
+    # Reset color to avoid bleeding
+    io.write("stdout", term.reset())
+
+    # Rain speed
+    time.sleep(10)
+}

@@ -1,0 +1,17 @@
+# File: main.link
+
+# 1. Call the library by using quatations
+import "math_tools.link"
+
+print(">> Library has been successfully imported.")
+
+# 2. Variable Access from the Libs
+print("PI value from Library: " + PI)
+
+# 3. Func Access from the Libs
+set area = circle_area(10)
+print("circle area (r=10): " + area)
+
+set name = os.exec("whoami")
+set greet = member_greet(name)
+print(greet)

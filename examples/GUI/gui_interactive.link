@@ -1,0 +1,48 @@
+print("Starting Interactive GUI...")
+
+gui_setup(800, 600, "Interactive Control Panel")
+
+# Initial button status
+set button_color = "red"
+set status_text = "SYSTEM LOCKED"
+
+while gui_running() {
+    gui_start()
+    gui_clear("black")
+    
+    # 1. Get Mouse Position
+    set mx = gui.mouse_x()
+    set my = gui.mouse_y()
+    
+    # 2. Draw Button (Box)
+    # Position: x=200, y=200, w=400, h=100
+    gui_rect(200, 200, 400, 100, button_color)
+    gui_text(260, 235, status_text, "white", 30)
+    
+    # 3. Click Detection Logic (Mouse collision with the box)
+    # If MouseX > 200 AND MouseX < 600 ...
+    if mx > 200 {
+        if mx < 600 {
+            if my > 200 {
+                if my < 300 {
+                    # Mouse is inside the box!
+                    
+                    # If clicked, change status
+                    if gui_click() {
+                        print("Button Clicked! Hacking started...")
+                        set button_color = "green"
+                        set status_text = "ACCESS GRANTED"
+                    }
+                }
+            }
+        }
+    }
+    
+    # Display mouse coordinates (Debug)
+    gui_text(10, 10, "Mouse X: " + mx, "gray", 20)
+    gui_text(10, 35, "Mouse Y: " + my, "gray", 20)
+    
+    gui_present()
+}
+
+gui_close()

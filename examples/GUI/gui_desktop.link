@@ -1,0 +1,147 @@
+print("Booting Nebula Desktop Environment v1.0 (Final)...")
+
+# Setup Window (Resizable)
+gui_setup(1024, 768, "Nebula Desktop v1.0")
+
+# Load Assets
+gui_load_font("hack.ttf", 32)
+gui_load_image("wallpaper.png", "bg")
+gui_load_image("logo.png", "start_icon")
+
+# State Variables
+set show_menu = false
+
+while gui_running() {
+    gui_start()
+    
+    # --- 1. UPDATE DATA (Real-time) ---
+    set w = gui.width()
+    set h = gui.height()
+    set mx = gui.mouse_x()
+    set my = gui.mouse_y()
+    
+    # --- 2. RENDER WALLPAPER ---
+    gui_draw_image("bg", 0, 0, w, h)
+
+    # --- 3. RENDER TASKBAR ---
+    set tb_h = 45
+    set tb_y = h - tb_h
+    gui_rect(0, tb_y, w, tb_h, "gray")
+
+    # --- 4. RENDER DIGITAL CLOCK ---
+    gui_text(w - 100, tb_y + 12, os.date(), "white", 20)
+
+    # --- 5. START BUTTON LOGIC ---
+    set btn_x = 10
+    set btn_y = tb_y + 5
+    set btn_w = 35
+    set btn_h = 35
+    
+    # Detect Start Button Hover
+    set is_hover_start = false
+    if mx >= btn_x { if mx <= (btn_x + btn_w) { if my >= btn_y { if my <= (btn_y + btn_h) { 
+        set is_hover_start = true 
+    } } } }
+
+    # Render Start Button Visual
+    if is_hover_start {
+        gui_rect(btn_x, btn_y, btn_w, btn_h, "blue")
+    } else {
+        if show_menu { gui_rect(btn_x, btn_y, btn_w, btn_h, "blue") }
+        else { gui_rect(btn_x, btn_y, btn_w, btn_h, "black") }
+    }
+    gui_draw_image("start_icon", btn_x, btn_y, btn_w, btn_h)
+    gui_text(btn_x + 40, btn_y + 8, "Start", "white", 20)
+
+    # --- 6. START MENU & APPLICATION LOGIC ---
+    if show_menu {
+        set menu_w = 250
+        set menu_h = 300
+        set menu_x = 5
+        set menu_y = tb_y - menu_h - 5
+        
+        # Render Menu Background
+        gui_rect(menu_x, menu_y, menu_w, menu_h, "black")
+        gui_rect(menu_x, menu_y, menu_w, 2, "blue")
+        gui_text(menu_x + 15, menu_y + 15, "Nebula OS", "blue", 24)
+        
+        # --- APPLICATION: TERMINAL ---
+        set term_y = menu_y + 70
+        set is_hover_term = false
+        # Check Terminal Hover
+        if mx >= menu_x { if mx <= (menu_x + menu_w) { if my >= term_y { if my <= (term_y + 25) {
+            set is_hover_term = true
+        } } } }
+        
+        # Terminal Visual & Click
+        if is_hover_term {
+            gui_rect(menu_x, term_y, menu_w, 25, "blue") # Highlight
+            if gui_click() {
+                print("Opening Terminal...")
+                os.exec("../../link examples/GUI/gui_terminal.link")
+                set show_menu = false
+            }
+        }
+        gui_text(menu_x + 20, term_y, "> Terminal", "green", 20)
+        
+        # --- OTHER APPLICATIONS (Text Only) ---
+        gui_text(menu_x + 20, menu_y + 100, "> File Manager", "white", 20)
+        gui_text(menu_x + 20, menu_y + 130, "> Web Browser", "white", 20)
+        
+        # --- SHUTDOWN ---
+        # --- 8. SHUTDOWN LOGIC ---
+        set sd_w = menu_w
+        set sd_h = 40
+        set sd_y = menu_y + menu_h - sd_h
+        
+        # Check if mouse is hovering over Shutdown area
+        set is_hover_sd = false
+        if mx >= menu_x { 
+            if mx <= (menu_x + sd_w) { 
+                if my >= sd_y { 
+                    if my <= (sd_y + sd_h) {
+                        set is_hover_sd = true
+                    }
+                } 
+            } 
+        }
+
+        # Render & Execute Exit
+        if is_hover_sd {
+            gui_rect(menu_x, sd_y, sd_w, sd_h, "red") # Red effect on hover
+            if gui_click() { 
+                gui_quit() # <--- THIS IS THE EXIT POINT
+                print("System Shutting Down...")
+            }
+        } else {
+            gui_rect(menu_x, sd_y, sd_w, sd_h, "gray")
+        }
+        gui_text(menu_x + 20, sd_y + 10, "Shutdown System", "white", 20)
+    }
+
+    # --- 7. GLOBAL MOUSE INTERACTION ---
+    if gui_click() {
+        # Use mouse_in_menu variable (check if mouse is inside menu area)
+        set mouse_in_menu = false
+        if show_menu {
+             if mx >= menu_x { if mx <= (menu_x + menu_w) { 
+                 if my >= menu_y { if my <= tb_y { set mouse_in_menu = true } } 
+             } }
+        }
+
+        if is_hover_start {
+            # Start button click: toggle menu
+            if show_menu { set show_menu = false } else { set show_menu = true }
+        } else {
+            # IF menu is open AND click happens outside menu area, close the menu
+            if show_menu {
+                if mouse_in_menu == false {
+                    set show_menu = false
+                }
+            }
+        }
+    }
+    gui_present()
+}
+
+gui_close()
