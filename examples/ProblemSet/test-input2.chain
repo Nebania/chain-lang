@@ -1,0 +1,29 @@
+# Tes String
+set name = "Nebula"
+set greet = 'Hola '
+set msg = greet + name
+print(msg) 
+
+# Tes Float
+set pi = 3.14
+set r = 10
+set area = pi * r * r
+print(area)
+
+# Boolean Test
+set Alive = true
+set Death = false
+if Alive
+    print("Still Alive!")
+else
+    print("It's Death")
+
+# Char Test
+set word = 'A'
+print(word)
+
+# String vs Char test
+set s1 = 'abc'  # Size of String > 1
+set s2 = 'a'    # Char == 1
+print(s1)
+print(s2)

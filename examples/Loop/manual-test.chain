@@ -1,0 +1,4 @@
+app "UserManager"
+    for user in "ahmed,noobhack,root"
+        print user
+        sh "echo 'Welcome back, '"

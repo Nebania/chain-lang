@@ -1,0 +1,160 @@
+# dino.chain
+# Google Dino Game 
+
+gui_setup(800, 400, "Chain Dino Game")
+
+# ==========================================
+# GAME VARIABLES
+# ==========================================
+# Game states: "INTRO", "COUNTDOWN", "PLAYING", "GAMEOVER"
+set state = "INTRO"
+set start_time = 0
+set countdown = 5
+
+# Player (Dino)
+set dino_x = 50
+set dino_y = 300
+set dino_w = 40
+set dino_h = 40
+set dino_vy = 0       
+set gravity = 1       
+set is_jumping = false
+
+# Obstacle (Cactus)
+set cactus_x = 800
+set cactus_w = 30
+set cactus_h = 40
+set cactus_y = 340 - cactus_h 
+set cactus_speed = 8  
+
+set score = 0
+
+# ==========================================
+# MAIN GAME LOOP
+# ==========================================
+while gui_running() {
+    
+    # ------------------------------------------
+    # 1. Game State Logic
+    # ------------------------------------------
+    
+    if state == "INTRO" {
+        if gui_is_key_pressed("ENTER") {
+            set state = "COUNTDOWN"
+            set start_time = gui_get_time() # Time Start
+        }
+    }
+    
+    elif state == "COUNTDOWN" {
+        # Count the time
+        set elapsed = gui_get_time() - start_time
+        set countdown = 5 - int(elapsed)
+        
+        if countdown <= 0 {
+            set state = "PLAYING"
+            set cactus_x = 800
+            set cactus_speed = 8
+            set score = 0
+            set dino_y = 300
+            set dino_vy = 0
+            set is_jumping = false
+        }
+    }
+    
+    elif state == "PLAYING" {
+        # --- Jump Input ---
+        if gui_is_key_pressed("SPACE") {
+            if is_jumping == false {
+                set dino_vy = -15      
+                set is_jumping = true
+            }
+        }
+
+        # --- Physics Engine ---
+        set dino_vy = dino_vy + gravity
+        set dino_y = dino_y + dino_vy
+
+        if dino_y >= 300 {
+            set dino_y = 300
+            set dino_vy = 0
+            set is_jumping = false
+        }
+
+        # --- Moving and Obstacle Generator ---
+        set cactus_x = cactus_x - cactus_speed
+
+        if cactus_x < -100 {
+            set cactus_x = 800
+            set score = score + 1
+            set cactus_speed = cactus_speed + 0.3 
+            
+            # Obstacle Variation 
+            set cactus_w = math.randint(20, 60)  # Random width (20 to 60)
+            set cactus_h = math.randint(30, 85)  # Random height (30 to 85)
+            set cactus_y = 340 - cactus_h        # Adjust Y to keep it on the ground
+        }
+
+        # --- Impact Action ---
+        set d_right = dino_x + dino_w
+        set c_right = cactus_x + cactus_w
+        set d_bottom = dino_y + dino_h
+        set c_bottom = cactus_y + cactus_h
+
+        if d_right > cactus_x {
+            if dino_x < c_right {
+                if d_bottom > cactus_y {
+                    if dino_y < c_bottom {
+                        set state = "GAMEOVER" # TABRAKAN!
+                    }
+                }
+            }
+        }
+    }
+    
+    elif state == "GAMEOVER" {
+        if gui_is_key_pressed("ENTER") {
+            set state = "COUNTDOWN"
+            set start_time = gui_get_time()
+        }
+    }
+
+    # ------------------------------------------
+    # 2. Rendering process
+    # ------------------------------------------
+    gui_start()
+    gui_clear("white")
+
+    if state == "INTRO" {
+        gui_text(200, 150, "CHAIN DINO", "blue", 50)
+        gui_text(250, 220, "Press ENTER to Start", "black", 25)
+    }
+    
+    elif state == "COUNTDOWN" {
+        gui_text(280, 150, "GET READY!", "black", 40)
+        gui_text(380, 220, str(countdown), "red", 60)
+    }
+    
+    elif state == "PLAYING" {
+        gui_rect(0, 340, 800, 5, "gray") # Ground
+        gui_rect(dino_x, dino_y, dino_w, dino_h, "blue") # Dino
+        gui_rect(cactus_x, cactus_y, cactus_w, cactus_h, "green") # Cactus
+        gui_text(650, 20, "Score: " + score, "black", 20)
+    }
+    
+    elif state == "GAMEOVER" {
+        # Rerendering process
+        gui_rect(0, 340, 800, 5, "gray") 
+        gui_rect(dino_x, dino_y, dino_w, dino_h, "blue") 
+        gui_rect(cactus_x, cactus_y, cactus_w, cactus_h, "green") 
+        gui_text(650, 20, "Score: " + score, "black", 20)
+        
+        # Game Over
+        gui_text(280, 120, "GAME OVER", "red", 40)
+        gui_text(250, 180, "Press ENTER to Restart", "black", 25)
+    }
+
+    gui_present()
+}
+
+gui_close()
+print("Game Closed")

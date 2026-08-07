@@ -1,0 +1,63 @@
+gui_setup(600, 300, "Advanced Nested GUI")
+
+# 1. Factory Function (Creating Button Objects using Closure)
+func createGUIButton(start_x, start_y, text) {
+    set clickCount = 0
+    set activeColor = "blue"
+    
+    # Nested Function (Render Method)
+    func drawAndCheck() {
+        # Draw Button Box
+        gui_rect(start_x, start_y, 200, 50, activeColor)
+        
+        # Draw Text inside it
+        set info = text + " (" + clickCount + ")"
+        gui_text(start_x + 20, start_y + 15, info, "white", 20)
+        
+        # Detect Mouse Click in button area
+        set mx = gui.mouse_x()
+        set my = gui.mouse_y()
+        
+        if mx > start_x and mx < (start_x + 200) {
+            if my > start_y and my < (start_y + 50) {
+                # Change color when hovered
+                activeColor = "red"
+                
+                if gui_click() {
+                    clickCount = clickCount + 1
+                    print("Button '" + text + "' pressed! Total: " + clickCount)
+                }
+            } else {
+                activeColor = "blue"
+            }
+        } else {
+            activeColor = "blue"
+        }
+        
+        return clickCount
+    }
+    
+    return drawAndCheck # Return this rendering function!
+}
+
+# 2. Create 2 Button Instances (They will have separate click memory!)
+set leftButton = createGUIButton(50, 100, "Click Me")
+set rightButton = createGUIButton(350, 100, "Other Button")
+
+print("Starting GUI...")
+
+# 3. Game Loop
+while gui_running() {
+    gui_start()
+    gui_clear("white")
+    
+    gui_text(180, 20, "Demo First-Class Function GUI", "black", 20)
+    
+    # Execute render capture functions (each button memory is safe!)
+    leftButton()
+    rightButton()
+    
+    gui_present()
+}
+
+gui_close()

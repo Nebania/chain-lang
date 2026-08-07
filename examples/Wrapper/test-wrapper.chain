@@ -1,0 +1,16 @@
+extern "c" {
+    #include <vector>
+    #include <algorithm>
+    
+    std::vector<int> data;
+    data.push_back(100);
+    data.push_back(50);
+    data.push_back(200);
+    
+    std::sort(data.begin(), data.end());
+    
+    print("Sorting Result from C++:");
+    for(int i = 0; i < data.size(); i++) {
+        print(data[i]);
+    }
+}

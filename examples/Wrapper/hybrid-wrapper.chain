@@ -1,0 +1,20 @@
+# Create any free variables in Chain
+set x = 30
+set y = 100.5
+set z = 5
+
+print("Begining:")
+print("X: " + x + " | Y: " + y)
+
+extern "c" {
+    print(" ==== C++ Wrapping ==== "); 
+    for(int i = 0; i < LINK_z; i++) {
+        LINK_x -= 1;
+        LINK_y -= 2.5;
+        print("Decrement: " + std::to_string(LINK_x));
+    }
+}
+
+print("")
+print("Final Result:")
+print("X: " + x + " | Y: " + y)

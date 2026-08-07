@@ -1,0 +1,52 @@
+print("=== CHAIN REMOTE BOT ===")
+
+# Target Configuration (Localhost for testing)
+set ip = "127.0.0.1"
+set port = 9000
+
+print("Connecting to " + ip + ":" + port + "...")
+set sock = net.socket()
+
+# Try to connect
+if net.connect(sock, ip, port) {
+    print(term.color("green") + "CONNECTED!" + term.reset())
+    
+    # Send welcome banner to the server
+    net.send(sock, "--- CONNECTED TO NEBULA OS ---\n")
+    net.send(sock, "Type 'exit' to close.\n")
+    
+    while true {
+        # 1. Show prompt on the server side
+        net.send(sock, "shell> ")
+        
+        # 2. Receive command from the server
+        set cmd = net.recv(sock)
+        
+        # Trim whitespace/newline (Important!)
+        set cmd = str.trim(cmd)
+        
+        if len(cmd) == 0 {
+            continue
+        }
+        
+        if cmd == "exit" {
+            net.send(sock, "Bye!\n")
+            break
+        }
+        
+        print("Executing: " + cmd)
+        
+        # 3. Execute OS command (os.exec feature)
+        # Caution: our os.exec returns output as a string
+        set output = os.exec(cmd)
+        
+        # 4. Send the output back to the server
+        net.send(sock, output + "\n")
+    }
+    
+    net.close(sock)
+    print("Connection closed.")
+    
+} else {
+    print(term.color("red") + "Failed to connect. Is Netcat running?" + term.reset())
+}

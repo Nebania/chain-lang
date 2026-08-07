@@ -1,0 +1,10 @@
+print(">>> Activate Secret Mode...")
+print(">>> Encryptcy: ON")
+
+# 1. Turn to Green Layout
+# \e[32m = Green Color, \e[0m = Color Reset
+os.setenv("PS1", "\n\e[32m┌──(NEBULA-OS)\n└─► \e[0m")
+
+# 2. Open New Shell for that settings
+# --norc for secret code
+os.exec("bash --norc")

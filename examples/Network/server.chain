@@ -1,0 +1,20 @@
+print("=== SIMPLE CHAT SERVER ===")
+set port = 8080
+set server = net.server(port)
+
+if server == -1 {
+    print("Failed to start server!")
+} else {
+    while true {
+        print("Waiting for client...")
+        set client = net.accept(server)
+        print(">> Client Connected!")
+
+        net.send(client, "Welcome to Chain Server!\n")
+
+        set msg = net.recv(client)
+        print("Client says: " + msg)
+
+        net.close(client)
+    }
+}

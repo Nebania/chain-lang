@@ -1,0 +1,34 @@
+# 1. Nested Function (Read Outside Env)
+func Outside() {
+    set name = "NebulaOS"
+    
+    func Inside() {
+        print("Hello from the Inside!")
+        print("Read Outside Function: " + name)
+    }
+    
+    Inside() # Call the Inside function
+}
+
+Outside()
+
+print("------------------")
+
+# 2. Function as Data Type (Closure / Counter)
+func makeCalculation() {
+    set number = 0
+    
+    func Calculate() {
+        number = number + 1
+        return number
+    }
+    
+    return Calculate # return Calculate func, not makeCalculate!
+}
+
+# Saving 
+set button = makeCalculation()
+
+print("Press 1: " + button())
+print("Press 2: " + button())
+print("Press 3: " + button())

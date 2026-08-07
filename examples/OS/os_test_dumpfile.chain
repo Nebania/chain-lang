@@ -1,0 +1,19 @@
+# Temporary File Cleaner Script
+set target = "dump.tmp"
+
+# 1. Create dummy file
+io.write(target, "This is junk data")
+print("File created: " + target)
+
+# 2. Check if file exists
+if io.exists(target)
+    print("File found! Deleting...\n")
+    io.remove(target)
+else
+    print("File not found.")
+
+# 3. Check again
+if io.exists(target)
+    print("Failed to delete.")
+else
+    print("Success! File has been removed.")

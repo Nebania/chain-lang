@@ -1,0 +1,33 @@
+print("Start the Log Audio Checking...")
+
+# 1. Debug Mode for RayLib log (Important!)
+gui_debug()
+
+# 2. Setup GUI & Audio
+gui_setup(400, 200, "Cek Log Audio")
+audio.init()
+
+# 3. Load Music
+if audio.play("vault.mp3") == 0 {
+    print("Failed to load the music!")
+}
+
+audio.volume(1.0)
+
+while gui_running() {
+    audio.update()
+
+    gui_start()
+    gui_clear("black")
+    
+    set waktu = audio.played()
+    set total = audio.length()
+    
+    gui_text(20, 40, "Status: PLAYING", "green", 20)
+    gui_text(20, 80, "Waktu: " + waktu + " / " + total, "white", 20)
+    
+    gui_present() 
+}
+
+audio.close()
+gui_close()

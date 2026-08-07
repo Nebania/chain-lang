@@ -1,0 +1,30 @@
+# --- Advanced Math Test ---
+
+# 1. Basic Prior Operations
+set basic = 10
+set priority = 10 + 5 * 2
+print(priority) 
+# Answer: 20 (because  5*2=10, then  10+10=20)
+# if wrong (flat left-to-right): 30
+
+# 2. Simple Parenthesis
+set parens = (10 + 5) * 2
+print(parens)
+# Answer: 30
+
+# 3. Complex Parenthesis Operation 
+set complex = ((10 + 2) * 5) / (2 + 1)
+print(complex)
+# Logic: (12 * 5) / 3 -> 60 / 3 -> 20
+
+# 4. multiple calculations
+set a = 5
+set b = 4
+set c = a * b + a
+print(c)
+# Answer: 25
+
+# 5. Assosiate Operations
+set sub = 100 - 50 - 10
+print(sub)
+# Answer: 40

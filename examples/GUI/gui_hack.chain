@@ -1,0 +1,20 @@
+print("Starting GUI via Terminal...")
+
+gui_setup(800, 600, "NebulaOS Hack Tool")
+
+while gui_running() {
+    
+    gui_start()
+    
+    gui_clear("black")
+    
+    gui_rect(0, 0, 800, 60, "green")
+    gui_text(20, 15, "NEBULA OS - TARGET MONITOR", "black", 30)
+    
+    gui_text(50, 100, "Target 1: 192.168.1.105 [ONLINE]", "green", 20)
+    
+    gui_present()
+}
+
+gui_close()
+print("GUI Closed.")

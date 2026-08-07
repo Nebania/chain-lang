@@ -1,0 +1,4 @@
+app "MathTest"
+    for i in range(3)
+        i++
+        print i 

@@ -1,0 +1,6 @@
+# hello_cool.chain
+print("============================")
+print("   NEBULA OS - CHAIN LANG    ")
+print("============================")
+print("Status: Online")
+print("Message: Hello World!")

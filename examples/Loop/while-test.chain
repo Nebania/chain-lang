@@ -1,0 +1,9 @@
+set x = 0
+while x < 5
+    print(x)
+    set x = x + 1
+
+set a = 10
+while a > 5
+    print(a)
+    set a = a - 2

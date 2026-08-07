@@ -1,0 +1,29 @@
+print("=== SYSTEM ENVIRONMENT TEST (NebulaOS) ===")
+
+# 1.Read System Variables (Read)
+# Took variable "USER" or "HOME" 
+set current_user = os.getenv("USER")
+set home_dir = os.getenv("HOME")
+
+print("Whoami : " + current_user)
+print("Home Directory: " + home_dir)
+
+# 2. Write New Variables (Write)
+print("\n[+] Trying to set new env variables...")
+os.setenv("APP_STATUS", "Active")
+os.setenv("Link_VER", "0.3")
+
+# 3. Verification (Read Again)
+set status = os.getenv("APP_STATUS")
+print("App Status: " + status)
+
+if status == "Active"
+    print(">> Success: New Variable added to memory.")
+else
+    print(">> Fails: Variable is not found.")
+
+# 4. Shell Test Integration
+# Call shell comman 'printenv' to proofing
+# that this file are added to OS level-system (child process).
+print("\n[+] Shell Command Checking (printenv):")
+os.exec("printenv Link_VER")

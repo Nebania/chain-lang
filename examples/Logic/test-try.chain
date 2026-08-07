@@ -1,0 +1,22 @@
+print("=== TRY-CATCH SYSTEM TEST ===")
+
+# Scenario 1: I/O Error (File Not Found)
+print("\n[1] Attempting to read a missing file...")
+try {
+    # This file should not exist
+    set content = io.read("ghost_file.txt")
+    print("Warning! The file actually exists?!")
+} catch (e) {
+    print(">> SUCCESS! Error caught: " + e)
+}
+
+# Scenario 2: Normal Code (Should not trigger catch)
+print("\n[2] Running normal code flow...")
+try {
+    set x = 10
+    print(">> X value is: " + x)
+} catch (e) {
+    print(">> FAILED! Normal code entered catch block? Error: " + e)
+}
+
+print("\n=== TEST FINISHED (Program did not crash) ===")
