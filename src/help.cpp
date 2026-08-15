@@ -2,7 +2,7 @@
 #include <iostream>
 
 void printVersion() {
-    std::cout << "Chain Version 0.5a (Full Release) \n" << std::endl;
+    std::cout << "Chain Version 0.5b (Full Release) \n" << std::endl;
 } 
 
 void printHelp() {
@@ -18,9 +18,10 @@ Our Website  : https://nebania.site
 
 USAGE:
   chain/chainlang                  : Enter Interactive Mode (REPL).
-  chain/chainlang <file.chain>      : Execute a Chain script file.
-  chain/chainlang <file.link>      : Execute a script file (.link is deprecated, use .chain).
+  chain/chainlang <file.chain>     : Execute a Chain script file.
+  chain/chainlang <file.link>      : Execute a script file (.link is deprecated).
   chain/chainlang --debug <file>   : Execute with AST Debug Mode.
+  chain/chainlang --time <file>    : Execute and measure execution time (Profiler).
   chain/chainlang --help           : Show this manual.
   chain/chainlang --version        : Show current version.
 
@@ -37,7 +38,7 @@ DATA TYPES:
 BASIC COMMANDS:
   set x = 10              : Variable declaration.
   print(x)                : Output to screen.
-  import "file.chain"      : Import other script files / libraries.
+  import "file.chain"     : Import other script files / libraries.
   sh "ls -la"             : Quick shell command execution.
 
 OBJECT ORIENTED PROGRAMMING:

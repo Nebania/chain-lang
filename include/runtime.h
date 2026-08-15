@@ -40,6 +40,8 @@ private:
 public:
     Runtime(); // Constructor
 
+    bool enableProfiling = false; // Profiling flag
+
     // Main execution function
     void run(const std::string& source, bool debug);
     void runStatement(Stmt* stmt);

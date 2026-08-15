@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono> // <-- TAMBAHKAN INI UNTUK MENGUKUR WAKTU
 #include "lexer.h"
 #include "parser.h"
 #include "runtime.h" 
@@ -68,19 +69,29 @@ int main(int argc, char** argv) {
         }
     }
 
-    // 2. Check the --debug flag
+    // 2. Check the flags (--debug and --time)
     bool debugMode = false;
-    for(int i=1; i<argc; i++) {
-        if(std::string(argv[i]) == "--debug") {
+    bool timeMode = false;
+    int flagsCount = 0;
+    
+    for(int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if(arg == "--debug") {
             debugMode = true;
-            break;
+            flagsCount++;
+        } else if (arg == "--time") {
+            timeMode = true;
+            flagsCount++;
         }
     }
 
-    if (argc < 2 || (argc == 2 && debugMode)) {
+    // Jika tidak ada argumen file, masuk ke REPL
+    if (argc < 2 || argc == 1 + flagsCount) {
         std::cout << "Nebania Chain v0.5 (Analyzer)" << std::endl;
         if (debugMode) std::cout << "[DEBUG MODE ACTIVE]" << std::endl;
+        if (timeMode) std::cout << "[TIME PROFILER ACTIVE]" << std::endl;
         std::cout << "Type 'exit' to quit." << std::endl;
+        
         ReplEditor editor;
         std::string inputBuffer;
         int indentLevel = 0; 
@@ -120,11 +131,10 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-
     std::string filename;
-    for(int i=1; i<argc; i++) {
+    for(int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg != "--debug") {
+        if (arg != "--debug" && arg != "--time") {
             filename = arg;
             break;
         }
@@ -135,8 +145,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // .chain is the current script extension. .link is still accepted for
-    // backwards compatibility, but is soft-deprecated in favor of .chain.
     auto hasExtension = [](const std::string& name, const std::string& ext) {
         if (name.size() < ext.size()) return false;
         return name.compare(name.size() - ext.size(), ext.size(), ext) == 0;
@@ -155,8 +163,22 @@ int main(int argc, char** argv) {
     std::string source((std::istreambuf_iterator<char>(file)),
                         std::istreambuf_iterator<char>());
 
-    run(runtime, source, debugMode);
+    // --- EKSEKUSI PROGRAM DENGAN ATAU TANPA PROFILER ---
+    if (timeMode) {
+        runtime.enableProfiling = true; // Beritahu Runtime untuk melacak per-fungsi
+        
+        auto start = std::chrono::high_resolution_clock::now();
+        run(runtime, source, debugMode);
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "\n\033[1;32m========================================\033[0m\n";
+        std::cout << "\033[1;33m[ChainLang Profiler]\033[0m Total Execution finished in: \033[1;36m" 
+                  << duration.count() << " ms\033[0m\n";
+        std::cout << "\033[1;32m========================================\033[0m\n";
+    } else {
+        run(runtime, source, debugMode);
+    }
 
     return 0;        
 }
-

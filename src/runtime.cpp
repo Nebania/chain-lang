@@ -38,6 +38,27 @@
 #include "link_wrapper.h"
 #include "link_audio.h"
 
+struct ProfilerTimer {
+    std::string name;
+    bool active;
+    std::chrono::high_resolution_clock::time_point start;
+
+    ProfilerTimer(const std::string& n, bool a) : name(n), active(a) {
+        if (active) start = std::chrono::high_resolution_clock::now();
+    }
+    ~ProfilerTimer() {
+        if (active) {
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> diff = end - start;
+            // Hanya cetak jika memakan waktu lebih dari 0.01 ms agar terminal tidak terlalu penuh
+            if (diff.count() > 0.01) {
+                std::cout << "\033[1;35m[Profiler]\033[0m Exec " << name 
+                          << " took: \033[1;36m" << diff.count() << " ms\033[0m\n";
+            }
+        }
+    }
+};
+
 namespace fs= std::filesystem; 
 static std::random_device rd;
 static std::mt19937 gen(rd()); 
@@ -107,6 +128,29 @@ void Runtime::initNativeFunctions() {
     return Obj(0);
 };
     
+    nativeRegistry["input"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (!args.empty()) {
+            std::cout << Sys::unescape(objToString(args[0])) << std::flush;
+        }
+        std::string line; 
+        std::getline(std::cin, line);
+        line = SysString::trim(line);
+
+        try {
+            size_t pos; 
+            int val = std::stoi(line, &pos);
+            if (pos == line.length()) return Obj(val);
+        } catch (...) {}
+
+        try {
+            size_t pos;
+            double val = std::stod(line, &pos);
+            if (pos == line.length()) return Obj(val);
+        } catch (...) {}
+        
+        return Obj(line);
+    };
+
     // ==========================================
     // 1. NETWORKING MODULE (SysNet)
     // ==========================================
@@ -987,6 +1031,8 @@ Obj Runtime::evaluateExpr(Expr* expr) {
     // 5. FUNCTION CALLS (THIS SECTION HAS COMPLETELY CHANGED!)
     // =========================================================
     if (auto call = dynamic_cast<CallExpr*>(expr)) {
+        ProfilerTimer timer("Function '" + call->func + "'", enableProfiling);
+        
         std::vector<Obj> args;
         for (auto& arg : call->args) {
             args.push_back(evaluateExpr(arg.get()));
@@ -1127,6 +1173,8 @@ void Runtime::runStatement(Stmt* stmt) {
 
     // 3. CALL STATEMENT 
     if (auto call = dynamic_cast<CallStmt*>(stmt)) {
+        ProfilerTimer timer("Call '" + call->func + "'", enableProfiling);
+        
         std::vector<Obj> args;
         for (auto& arg : call->args) args.push_back(evaluateExpr(arg.get()));
 
@@ -1173,7 +1221,9 @@ void Runtime::runStatement(Stmt* stmt) {
             return;
         }
     if (auto whileLoop = dynamic_cast<WhileStmt*>(stmt)) {
-            while (isTruthy(evaluateExpr(whileLoop->condition.get()))) {
+        ProfilerTimer timer("While Loop", enableProfiling);
+        
+        while (isTruthy(evaluateExpr(whileLoop->condition.get()))) {
                 try {
                     for (auto& s : whileLoop->body) runStatement(s.get());
                 } 
@@ -1187,7 +1237,9 @@ void Runtime::runStatement(Stmt* stmt) {
             return;
         }
     if (auto loop = dynamic_cast<ForStmt*>(stmt)) {
-             Obj collection = evaluateExpr(loop->collection.get());
+        ProfilerTimer timer("For Loop", enableProfiling);
+        
+        Obj collection = evaluateExpr(loop->collection.get());
              if (std::holds_alternative<std::shared_ptr<List>>(collection.as)) {
                  auto list = std::get<std::shared_ptr<List>>(collection.as);
                  currentEnv->define(loop->iteratorName, Obj(0)); 

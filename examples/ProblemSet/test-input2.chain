@@ -1,6 +1,6 @@
 # Tes String
 set name = "Nebula"
-set greet = 'Hola '
+set greet = 'a'
 set msg = greet + name
 print(msg) 
 
