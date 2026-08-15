@@ -69,7 +69,7 @@ Chain now comes with powerful built-in modules:
     and manage environment variables.
   - **Math & Strings (math., str.):** Random number generation, trigonometry, string
     splitting, replacing, and trimming.
-  - **XML Parsing(xml*):** Read and Write the parsed XML file and get values(**Basic Implementation**). 
+  - **XML Parsing(xml):** basic file reading and data processing.
 
 The Nebania Ecosystem
 
