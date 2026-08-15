@@ -36,6 +36,7 @@
 #include "runtime.h"
 #include "link_gui.h"
 #include "link_wrapper.h"
+#include "link_xml.h"
 #include "link_audio.h"
 
 struct ProfilerTimer {
@@ -867,6 +868,34 @@ void Runtime::initNativeFunctions() {
     if (std::holds_alternative<int>(args[0].as)) band = std::get<int>(args[0].as);
     else if (std::holds_alternative<double>(args[0].as)) band = (int)std::get<double>(args[0].as);
     return Obj((double)SysAudio::getSpectrum(band)); 
+    };
+     // ==========================================
+    // XML MODULE (Bridge to src/link_xml.cpp)
+    // ==========================================
+    nativeRegistry["xmlLoadFile"] = [this](const std::vector<Obj>& args) -> Obj {
+        std::string path = objToString(args[0]);
+
+        auto* doc = LinkXML::readFromFile(path);
+
+        if (!doc)
+            return Obj(0);
+        return Obj(1);
+    };
+    nativeRegistry["xmlgetText"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.empty())
+            return Obj(0);
+
+        std::string path = objToString(args[0]);
+
+        if (path.empty())
+            return Obj(0);
+
+        tinyxml2::XMLElement* element = LinkXML::findPath(path);
+
+        if (!element)
+            return Obj(0);
+
+        return Obj(LinkXML::getElementText(element));
     };
 }
 

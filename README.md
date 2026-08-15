@@ -69,6 +69,7 @@ Chain now comes with powerful built-in modules:
     and manage environment variables.
   - **Math & Strings (math., str.):** Random number generation, trigonometry, string
     splitting, replacing, and trimming.
+  - **XML Parsing(xml*):** Read and Write the parsed XML file and get values(**Basic Implementation**). 
 
 The Nebania Ecosystem
 
@@ -117,9 +118,14 @@ on your system.
 ```
 3.  **Build the project:**
 ```bash
+    #POSIX(Linux,BSD,OSX...)
     make          for a standard build
     make debug    for a build with debug symbols (for development)
     make release  for an optimized build
+    #Windows
+    make -f makefile.win         for a standard build
+    make debug -f makefile.win   for a build with debug symbols (for development)
+    make -f makefile.win release for an optimized build
 ```
 4.  **Optional — install to PATH:**
 ```bash
