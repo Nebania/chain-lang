@@ -1,0 +1,209 @@
+name: Release
+
+# Builds chainlang for multiple Linux architectures and, when triggered by
+# a version tag (v*), attaches the binaries to a GitHub Release.
+#
+# Coverage right now: x86_64, i686 (32-bit), aarch64 — native runners.
+# riscv64 runs under QEMU emulation and is best-effort (continue-on-error).
+# BSD is intentionally NOT in this workflow: GitHub Actions has no BSD
+# runner, so that needs a self-hosted runner or a service like Cirrus CI —
+# tracked as a separate follow-up, not faked here.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}   # allows running manually to test before tagging
+
+env:
+  RAYLIB_VERSION: "5.5"
+
+jobs:
+  # ---------------------------------------------------------------------
+  # x86_64 — native
+  # ---------------------------------------------------------------------
+  build-x86_64:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build + X11/GL dev deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config \
+            libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxxf86vm-dev
+
+      - name: Build raylib from source
+        run: |
+          git clone --depth 1 --branch ${{ env.RAYLIB_VERSION }} https://github.com/raysan5/raylib.git
+          cmake -S raylib -B raylib/build -DPLATFORM=Desktop -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build raylib/build -j"$(nproc)"
+          sudo cmake --install raylib/build
+          sudo ldconfig
+
+      - name: Build chainlang
+        run: make release
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-linux-x86_64.tar.gz chainlang README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-linux-x86_64
+          path: dist/*.tar.gz
+
+  # ---------------------------------------------------------------------
+  # aarch64 — native (GitHub-hosted arm64 runner, public repos)
+  # ---------------------------------------------------------------------
+  build-aarch64:
+    name: Linux aarch64
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build + X11/GL dev deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config \
+            libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxxf86vm-dev
+
+      - name: Build raylib from source
+        run: |
+          git clone --depth 1 --branch ${{ env.RAYLIB_VERSION }} https://github.com/raysan5/raylib.git
+          cmake -S raylib -B raylib/build -DPLATFORM=Desktop -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build raylib/build -j"$(nproc)"
+          sudo cmake --install raylib/build
+          sudo ldconfig
+
+      - name: Build chainlang
+        run: make release
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-linux-aarch64.tar.gz chainlang README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-linux-aarch64
+          path: dist/*.tar.gz
+
+  # ---------------------------------------------------------------------
+  # i686 (32-bit x86) — same runner as x86_64, built with -m32 + multilib
+  # ---------------------------------------------------------------------
+  build-i686:
+    name: Linux i686 (32-bit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable i386 arch + install 32-bit deps
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib cmake pkg-config \
+            libgl1-mesa-dev:i386 libx11-dev:i386 libxrandr-dev:i386 \
+            libxi-dev:i386 libxcursor-dev:i386 libxinerama-dev:i386 \
+            libxxf86vm-dev:i386
+
+      - name: Build raylib from source (32-bit)
+        run: |
+          git clone --depth 1 --branch ${{ env.RAYLIB_VERSION }} https://github.com/raysan5/raylib.git
+          cmake -S raylib -B raylib/build -DPLATFORM=Desktop -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 \
+            -DCMAKE_EXE_LINKER_FLAGS=-m32 -DCMAKE_SHARED_LINKER_FLAGS=-m32
+          cmake --build raylib/build -j"$(nproc)"
+          sudo cmake --install raylib/build
+          sudo ldconfig
+
+      - name: Build chainlang (32-bit)
+        run: make release CXXFLAGS="-std=c++17 -Wall -Wextra -I./include -m32" LDFLAGS="-lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -m32"
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-linux-i686.tar.gz chainlang README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-linux-i686
+          path: dist/*.tar.gz
+
+  # ---------------------------------------------------------------------
+  # riscv64 — QEMU-emulated container, best-effort (no native runner exists)
+  # ---------------------------------------------------------------------
+  build-riscv64:
+    name: Linux riscv64 (experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: riscv64
+
+      - name: Build inside riscv64 container
+        run: |
+          docker run --rm --platform linux/riscv64 \
+            -v "${{ github.workspace }}":/work -w /work \
+            riscv64/ubuntu:24.04 bash -c '
+              set -e
+              apt-get update
+              apt-get install -y build-essential cmake pkg-config git \
+                libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev \
+                libxcursor-dev libxinerama-dev libxxf86vm-dev
+              git clone --depth 1 --branch ${{ env.RAYLIB_VERSION }} https://github.com/raysan5/raylib.git
+              cmake -S raylib -B raylib/build -DPLATFORM=Desktop -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release
+              cmake --build raylib/build -j"$(nproc)"
+              cmake --install raylib/build
+              ldconfig
+              make release
+            '
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-linux-riscv64.tar.gz chainlang README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-linux-riscv64
+          path: dist/*.tar.gz
+
+  # ---------------------------------------------------------------------
+  # Publish a GitHub Release with all built binaries attached (tag pushes only)
+  # ---------------------------------------------------------------------
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-x86_64, build-aarch64, build-i686, build-riscv64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifact dirs
+        run: |
+          mkdir -p release-assets
+          find dist -name '*.tar.gz' -exec cp {} release-assets/ \;
+          ls -la release-assets
+
+      - name: Generate checksums
+        run: |
+          cd release-assets
+          sha256sum *.tar.gz > SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
