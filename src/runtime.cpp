@@ -863,16 +863,16 @@ void Runtime::initNativeFunctions() {
         return Obj(0);
     };
     nativeRegistry["audio.spectrum"] = [](const std::vector<Obj>& args) -> Obj {
-    if (args.empty()) return Obj(0.0);
-    int band = 0;
-    if (std::holds_alternative<int>(args[0].as)) band = std::get<int>(args[0].as);
-    else if (std::holds_alternative<double>(args[0].as)) band = (int)std::get<double>(args[0].as);
-    return Obj((double)SysAudio::getSpectrum(band)); 
+        if (args.empty()) return Obj(0.0);
+        int band = 0;
+        if (std::holds_alternative<int>(args[0].as)) band = std::get<int>(args[0].as);
+        else if (std::holds_alternative<double>(args[0].as)) band = (int)std::get<double>(args[0].as);
+        return Obj((double)SysAudio::getSpectrum(band)); 
     };
      // ==========================================
     // XML MODULE (Bridge to src/link_xml.cpp)
     // ==========================================
-    nativeRegistry["xmlLoadFile"] = [this](const std::vector<Obj>& args) -> Obj {
+    nativeRegistry["xml_LoadFile"] = [this](const std::vector<Obj>& args) -> Obj {
         std::string path = objToString(args[0]);
 
         auto* doc = LinkXML::readFromFile(path);
@@ -881,7 +881,32 @@ void Runtime::initNativeFunctions() {
             return Obj(0);
         return Obj(1);
     };
-    nativeRegistry["xmlgetText"] = [this](const std::vector<Obj>& args) -> Obj {
+    nativeRegistry["xml_LoadString"] = [this](const std::vector<Obj>& args) -> Obj {
+        std::string path = objToString(args[0]);
+
+        auto* doc = LinkXML::readFromString(path);
+
+        if (!doc)
+            return Obj(0);
+        return Obj(1);
+    };
+    nativeRegistry["xml_getRoot"] = [this](const std::vector<Obj>& args) -> Obj {
+        return Obj(LinkXML::getRoot());
+    };
+    nativeRegistry["xml_destroyXML"] = [](const std::vector<Obj>& args) -> Obj {
+        LinkXML::destroyXML();
+        return Obj(0);
+    };
+    nativeRegistry["xml_exists"] = [this](const std::vector<Obj>& args) -> Obj {
+        if(args.size() < 2){
+            return Obj(0);
+        }
+        std::string path = objToString(args[0]);
+        std::string value = objToString(args[1]);
+
+        return Obj(LinkXML::exists(path,value));
+    };
+    nativeRegistry["xml_getText"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.empty())
             return Obj(0);
 

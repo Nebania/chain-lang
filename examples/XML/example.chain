@@ -1,3 +1,13 @@
-
-xmlLoadFile("test.xml")
-print(xmlgetText("ID.name"))
+#=============================================
+#1.Loads the file and gets text from ID.name
+#2.Loads from string and text from Item.price
+#=============================================
+#1
+xml_LoadFile("test.xml")
+print(xml_getText("ID.name"))
+xml_destroyXML();
+#2
+xml = "<Item><name>Chocolate</name><price>1.99</price></Item>"
+xml_LoadString(xml)
+print(xml_getText("Item.price"))
+xml_destroyXML();

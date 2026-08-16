@@ -25,14 +25,18 @@ namespace LinkXML{
         return doc;
     }
 
-    void readFromString(std::string& string){
+    tinyxml2::XMLDocument* readFromString(std::string& string){
 
         if (doc->Parse(string.c_str()) != tinyxml2::XML_SUCCESS){
             std::cout << "[CXML] Failed to parse XML string" << std::endl;
-            return;
+            return nullptr;
         }
 
         std::cout << "[CXML] XML string loaded successfully!" << std::endl;
+        return doc;
+    }
+    void destroyXML(){
+        doc->Clear();
     }
     tinyxml2::XMLElement* getRoot(){
         if(!doc)
@@ -90,5 +94,24 @@ namespace LinkXML{
         }
 
         return current;
+    }
+    bool exists(const std::string& path, const std::string& value){
+        tinyxml2::XMLElement* element = findPath(path);
+
+        if (!element)
+            return false;
+
+        for (auto* current = element;
+            current;
+            current = current->NextSiblingElement(element->Name()))
+        {
+            if (current->GetText() &&
+                value == current->GetText())
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
