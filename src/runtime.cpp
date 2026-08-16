@@ -115,7 +115,62 @@ char getChar() {
         return ch;
     #endif
 }
+CREL Runtime::createAPI()
+{
+    return CREL(
+        [this](const std::string& name, NativeFn fn)
+        {
+            nativeRegistry[name] = std::move(fn);
+        }
+    );
+}
+bool Runtime::loadLibrary(const std::string& path)
+{
+    HMODULE handle = LoadLibraryA(path.c_str());
 
+    if (!handle) {
+        DWORD error = GetLastError();
+
+        std::cerr
+            << "[CREL] LoadLibraryA failed for: "
+            << path
+            << " | Windows error: "
+            << error
+            << std::endl;
+
+        return false;
+    }
+
+    using InitFn = void (*)(CREL*);
+
+    auto init = reinterpret_cast<InitFn>(
+        GetProcAddress(handle, "CREL_Init")
+    );
+
+    if (!init) {
+        DWORD error = GetLastError();
+
+        std::cerr
+            << "[CREL] CREL_Init not found in: "
+            << path
+            << " | Windows error: "
+            << error
+            << std::endl;
+
+        FreeLibrary(handle);
+        return false;
+    }
+
+    CREL api(
+        [this](const std::string& name, NativeFn fn) {
+            nativeRegistry[name] = std::move(fn);
+        }
+    );
+
+    init(&api);
+
+    return true;
+}
 void Runtime::initNativeFunctions() {
     
     nativeRegistry["print"] = [this](const std::vector<Obj>& args) -> Obj {

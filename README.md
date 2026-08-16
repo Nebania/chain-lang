@@ -54,6 +54,7 @@ Advanced Features (v0.5 Major Update)
     code directly inside your .chain scripts! Chain will automatically
     compile, cache, and execute it, sharing variables seamlessly via Shared
     Memory.
+  - **CREL(Chain Runtime Extension Library)** CREL is a library that lets developers creating low-level,native libraries using C++
 
 Built-in Standard Libraries
 

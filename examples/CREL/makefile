@@ -1,0 +1,2 @@
+all:
+	g++ -shared -o hello.dll crelHello.cpp

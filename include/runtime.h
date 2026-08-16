@@ -12,7 +12,8 @@
 #include "types.h"
 #include "env.h"
 #include "parser.h" 
-
+#include <CREL/CREL.hpp>
+#include "crel_loader.h"
 // Native Function type definition
 using NativeFn = std::function<Obj(const std::vector<Obj>&)>;
 
@@ -29,6 +30,7 @@ private:
 
     // Helper Functions
     void initNativeFunctions();
+    CREL createAPI();
     std::string objToString(const Obj& o);
     std::string getAnsiColor(const std::string& color);
     void printObj(const Obj& val);
@@ -43,6 +45,7 @@ public:
     bool enableProfiling = false; // Profiling flag
 
     // Main execution function
+    bool loadLibrary(const std::string& path);
     void run(const std::string& source, bool debug);
     void runStatement(Stmt* stmt);
     Obj evaluateExpr(Expr* expr);

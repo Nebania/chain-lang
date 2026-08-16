@@ -54,35 +54,71 @@ void run(Runtime& runtime, const std::string& source, bool isDebug) {
 
 int main(int argc, char** argv) {
     Runtime runtime; 
-
-    if (argc == 2) {
-        std::string arg = argv[1];
-
-        if (arg == "--help" || arg == "-h") {
-            printHelp();
-            return 0;
-        }
-
-        if (arg == "--version" || arg == "-v") { 
-            printVersion(); 
-            return 0;
-        }
-    }
-
-    // 2. Check the flags (--debug and --time)
+    std::string filename;
+    std::vector<std::string> libraries;
+    int flagsCount = 0;
     bool debugMode = false;
     bool timeMode = false;
-    int flagsCount = 0;
-    
-    for(int i = 1; i < argc; i++) {
+
+    auto hasExtension = [](const std::string& name, const std::string& ext) {
+        if (name.size() < ext.size())
+            return false;
+
+        return name.compare(name.size() - ext.size(),ext.size(),ext) == 0;
+    };
+
+    // Parse command-line arguments
+    for (int i = 1; i < argc; i++) {
+
         std::string arg = argv[i];
-        if(arg == "--debug") {
+
+        if (arg == "--debug") {
             debugMode = true;
-            flagsCount++;
-        } else if (arg == "--time") {
-            timeMode = true;
-            flagsCount++;
         }
+
+        else if (arg == "--time") {
+            timeMode = true;
+        }
+
+        // Load a C++ runtime library
+        else if (arg == "--crel") {
+
+            if (i + 1 >= argc) {
+                std::cerr
+                    << "Error: --crel requires a library path.\n";
+
+                return 1;
+            }
+
+            std::string library = argv[++i];
+
+            libraries.push_back(library);
+        }
+
+        // Anything else is assumed to be the Chain file
+        else {
+            if (filename.empty()) {
+                filename = arg;
+            }
+            else {
+                std::cerr
+                    << "Error: Unexpected argument: "
+                    << arg << "\n";
+
+                return 1;
+            }
+        }
+    }
+    for (const auto& library : libraries) {
+        std::cout << "[CREL] Loading: " << library << std::endl;
+
+        if (!runtime.loadLibrary(library)) {
+            std::cerr << "[CREL] Failed to load: " << library << std::endl;
+
+            return 1;
+        }
+
+        std::cout << "[CREL] Loaded successfully: " << library << std::endl;
     }
 
     // Jika tidak ada argumen file, masuk ke REPL
@@ -130,8 +166,6 @@ int main(int argc, char** argv) {
         }
         return 0;
     }
-
-    std::string filename;
     for(int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg != "--debug" && arg != "--time") {
@@ -144,11 +178,6 @@ int main(int argc, char** argv) {
         std::cout << "Error: No file specified." << std::endl;
         return 1;
     }
-
-    auto hasExtension = [](const std::string& name, const std::string& ext) {
-        if (name.size() < ext.size()) return false;
-        return name.compare(name.size() - ext.size(), ext.size(), ext) == 0;
-    };
 
     if (hasExtension(filename, ".link")) {
         std::cout << "[Tip] This file seems to use the .link extension, which has been deprecated!\nNo worries, Nebania HQ recommends renaming this to a .chain file.\nIt's quick and won't do any harm to your code." << std::endl;
