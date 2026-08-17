@@ -1,49 +1,58 @@
-CXX      := g++
+CXX := g++
+
 CXXFLAGS := -std=c++17 -Wall -Wextra -I./include
-LDFLAGS  := -lraylib -lopengl32 -lm -lws2_32
-TARGET   := chainlang
-BINPATH  := $(abspath $(TARGET))
-SRCDIR   := src
-OBJDIR   := obj
+
+TARGET := chainlang.exe
+
+SRCDIR := src
+OBJDIR := obj
+
+# Windows libraries required by raylib
+LDFLAGS := \
+	-lraylib \
+	-lopengl32 \
+	-lgdi32 \
+	-lwinmm \
+	-lws2_32 \
+	-luser32 \
+	-lshell32 \
+	-limm32 \
+	-lversion
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
-OBJS := $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
+OBJS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 
-.PHONY: all build clean run debug release install
+
+.PHONY: all build release debug clean
+
 
 all: build
 
+
 build: $(TARGET)
+
 
 $(TARGET): $(OBJS)
 	@echo "Linking $(TARGET)..."
-	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@ 2>> error.txt && \
-		echo "Build successful!" || \
-		(echo "Build failed — see error.txt" && exit 1)
+	$(CXX) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(TARGET)
+	@echo "Build successful!"
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
-	@echo "  Compiling $<..."
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ 2>> error.txt
 
-$(OBJDIR):
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-debug: CXXFLAGS += -g -O0 -DDEBUG
-debug: build
 
 release: CXXFLAGS += -O2 -DNDEBUG
 release: build
 
-run: build
-	@./$(TARGET)
 
-install: release
-	@ln -sf "$(BINPATH)" /usr/local/bin/chainlang
-	@ln -sf "$(BINPATH)" /usr/local/bin/chain
-	@echo "Linked /usr/local/bin/chainlang -> $(BINPATH)"
-	@echo "Linked /usr/local/bin/chain -> $(BINPATH)"
-	@echo "The binary stays in this folder — don't move or delete it, or the symlinks will break."
+debug: CXXFLAGS += -g -O0 -DDEBUG
+debug: build
+
 
 clean:
-	@rm -rf $(OBJDIR) $(TARGET) error.txt
+	rm -rf $(OBJDIR) $(TARGET)
+
 	@echo "Cleaned."
