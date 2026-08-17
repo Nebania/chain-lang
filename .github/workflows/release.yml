@@ -15,11 +15,13 @@ jobs:
   # ============================================================
   # LINUX x86_64
   # ============================================================
+
   build-linux-x86_64:
     name: Linux x86_64
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -31,6 +33,7 @@ jobs:
             build-essential \
             cmake \
             pkg-config \
+            file \
             libgl1-mesa-dev \
             libx11-dev \
             libxrandr-dev \
@@ -87,17 +90,20 @@ jobs:
   # ============================================================
   # LINUX i686
   # ============================================================
+
   build-linux-i686:
     name: Linux i686
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Enable i386
         run: |
           sudo dpkg --add-architecture i386
+
           sudo apt-get update
 
       - name: Install dependencies
@@ -108,6 +114,7 @@ jobs:
             g++-multilib \
             cmake \
             pkg-config \
+            file \
             libgl1-mesa-dev:i386 \
             libx11-dev:i386 \
             libxrandr-dev:i386 \
@@ -170,11 +177,13 @@ jobs:
   # ============================================================
   # LINUX ARM64
   # ============================================================
+
   build-linux-aarch64:
     name: Linux aarch64
     runs-on: ubuntu-24.04-arm
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -186,6 +195,7 @@ jobs:
             build-essential \
             cmake \
             pkg-config \
+            file \
             libgl1-mesa-dev \
             libx11-dev \
             libxrandr-dev \
@@ -242,13 +252,18 @@ jobs:
   # ============================================================
   # LINUX RISC-V64
   # ============================================================
+
   build-linux-riscv64:
     name: Linux riscv64
     runs-on: ubuntu-latest
 
+    # RISC-V is built through QEMU.
+    # This prevents a failed experimental RISC-V build
+    # from stopping the other releases.
     continue-on-error: true
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -268,6 +283,10 @@ jobs:
             bash -c '
               set -e
 
+              echo "======================================"
+              echo "Installing RISC-V dependencies"
+              echo "======================================"
+
               apt-get update
 
               apt-get install -y \
@@ -275,6 +294,8 @@ jobs:
                 cmake \
                 pkg-config \
                 git \
+                file \
+                tar \
                 libgl1-mesa-dev \
                 libx11-dev \
                 libxrandr-dev \
@@ -283,10 +304,18 @@ jobs:
                 libxinerama-dev \
                 libxxf86vm-dev
 
+              echo "======================================"
+              echo "Downloading raylib"
+              echo "======================================"
+
               git clone \
                 --depth 1 \
                 --branch 5.5 \
                 https://github.com/raysan5/raylib.git
+
+              echo "======================================"
+              echo "Building raylib"
+              echo "======================================"
 
               cmake \
                 -S raylib \
@@ -299,7 +328,15 @@ jobs:
 
               cmake --install raylib/build
 
+              echo "======================================"
+              echo "Building Chain-Lang"
+              echo "======================================"
+
               make release
+
+              echo "======================================"
+              echo "RISC-V binary"
+              echo "======================================"
 
               file chainlang
             '
@@ -328,48 +365,64 @@ jobs:
   # ============================================================
   # WINDOWS x86_64
   # ============================================================
+
   build-windows-x86_64:
     name: Windows x86_64
     runs-on: windows-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
+
+      # --------------------------------------------------------
+      # MSYS2
+      # --------------------------------------------------------
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
+
           install: >-
             git
             tar
             make
+            file
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-pkgconf
 
+      # --------------------------------------------------------
+      # Verify compiler
+      # --------------------------------------------------------
+
       - name: Check compiler
         shell: msys2 {0}
         run: |
-          echo "MSYSTEM=$MSYSTEM"
+          echo "======================================"
+          echo "Compiler"
+          echo "======================================"
 
-          echo "Architecture:"
-          uname -m
-
-          echo "Compiler:"
-          g++ -dumpmachine
           g++ --version
 
-          echo "Make:"
+          echo "======================================"
+          echo "Target"
+          echo "======================================"
+
+          g++ -dumpmachine
+
+          echo "======================================"
+          echo "Make"
+          echo "======================================"
+
           mingw32-make --version
 
-          echo "CMake:"
-          cmake --version
+      # --------------------------------------------------------
+      # Download raylib
+      # --------------------------------------------------------
 
-      # ----------------------------------------------------------
-      # Build raylib
-      # ----------------------------------------------------------
       - name: Download raylib
         shell: msys2 {0}
         run: |
@@ -378,62 +431,80 @@ jobs:
             --branch $RAYLIB_VERSION \
             https://github.com/raysan5/raylib.git
 
+      # --------------------------------------------------------
+      # Build raylib
+      # --------------------------------------------------------
+
       - name: Build raylib
         shell: msys2 {0}
         run: |
-          cd raylib
-
           cmake \
-            -S . \
-            -B build \
+            -S raylib \
+            -B raylib/build \
             -G "MSYS Makefiles" \
             -DPLATFORM=Desktop \
             -DBUILD_EXAMPLES=OFF \
             -DCMAKE_BUILD_TYPE=Release
 
-          cmake --build build -- -j2
+          cmake --build raylib/build -j2
+
+      # --------------------------------------------------------
+      # Install raylib
+      # --------------------------------------------------------
 
       - name: Install raylib
         shell: msys2 {0}
         run: |
-          cd raylib
-
           cmake \
-            --install build \
+            --install raylib/build \
             --prefix /mingw64
 
-      # ----------------------------------------------------------
+      # --------------------------------------------------------
       # Build Chain-Lang
-      # ----------------------------------------------------------
+      #
+      # IMPORTANT:
+      # Windows uses makefile.win.
+      # Linux uses makefile.
+      # --------------------------------------------------------
+
       - name: Build Chain-Lang
         shell: msys2 {0}
         run: |
-          mingw32-make -f makefile.win release || {
-            echo "======================================"
-            echo "CHAIN-LANG BUILD FAILED"
-            echo "======================================"
+          echo "======================================"
+          echo "Building Chain-Lang for Windows"
+          echo "======================================"
 
-            if [ -f error.txt ]; then
-              cat error.txt
-            fi
+          mingw32-make \
+            -f makefile.win \
+            clean
 
-            exit 1
-          }
+          mingw32-make \
+            -f makefile.win \
+            release
 
-      # ----------------------------------------------------------
-      # Verify
-      # ----------------------------------------------------------
+      # --------------------------------------------------------
+      # Check binary
+      # --------------------------------------------------------
+
       - name: Check binary
         shell: msys2 {0}
         run: |
+          echo "======================================"
+          echo "Windows binary"
+          echo "======================================"
+
           file chainlang.exe
 
-          echo "Architecture:"
+          echo "======================================"
+          echo "PE information"
+          echo "======================================"
+
           objdump -f chainlang.exe
 
-      # ----------------------------------------------------------
+      # --------------------------------------------------------
       # Package
-      # ----------------------------------------------------------
+      # --------------------------------------------------------
+
       - name: Package
         shell: msys2 {0}
         run: |
@@ -445,6 +516,10 @@ jobs:
             README.md \
             LICENSE
 
+      # --------------------------------------------------------
+      # Upload
+      # --------------------------------------------------------
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -455,6 +530,7 @@ jobs:
   # ============================================================
   # GITHUB RELEASE
   # ============================================================
+
   release:
     name: Publish GitHub Release
 
@@ -474,10 +550,18 @@ jobs:
 
     steps:
 
+      # --------------------------------------------------------
+      # Download all artifacts
+      # --------------------------------------------------------
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
+
+      # --------------------------------------------------------
+      # Collect packages
+      # --------------------------------------------------------
 
       - name: Collect release files
         run: |
@@ -485,14 +569,18 @@ jobs:
 
           find dist \
             -type f \
-            -name '*.tar.gz' \
+            -name "*.tar.gz" \
             -exec cp {} release-assets/ \;
 
           echo "======================================"
-          echo "Release files:"
+          echo "Release files"
           echo "======================================"
 
           ls -lh release-assets
+
+      # --------------------------------------------------------
+      # SHA256
+      # --------------------------------------------------------
 
       - name: Generate SHA256 checksums
         run: |
@@ -500,7 +588,15 @@ jobs:
 
           sha256sum *.tar.gz > SHA256SUMS.txt
 
+          echo "======================================"
+          echo "SHA256"
+          echo "======================================"
+
           cat SHA256SUMS.txt
+
+      # --------------------------------------------------------
+      # Create GitHub Release
+      # --------------------------------------------------------
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -508,4 +604,5 @@ jobs:
           files: |
             release-assets/*.tar.gz
             release-assets/SHA256SUMS.txt
+
           generate_release_notes: true
