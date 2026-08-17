@@ -26,6 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
+
           sudo apt-get install -y \
             build-essential \
             cmake \
@@ -55,6 +56,7 @@ jobs:
           cmake --build raylib/build -j"$(nproc)"
 
           sudo cmake --install raylib/build
+
           sudo ldconfig
 
       - name: Build Chain-Lang
@@ -80,77 +82,6 @@ jobs:
         with:
           name: chainlang-linux-x86_64
           path: dist/chainlang-linux-x86_64.tar.gz
-
-
-  # ============================================================
-  # LINUX ARM64
-  # ============================================================
-  build-linux-aarch64:
-    name: Linux aarch64
-    runs-on: ubuntu-24.04-arm
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            pkg-config \
-            libgl1-mesa-dev \
-            libx11-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libxcursor-dev \
-            libxinerama-dev \
-            libxxf86vm-dev
-
-      - name: Build raylib
-        run: |
-          git clone \
-            --depth 1 \
-            --branch ${{ env.RAYLIB_VERSION }} \
-            https://github.com/raysan5/raylib.git
-
-          cmake \
-            -S raylib \
-            -B raylib/build \
-            -DPLATFORM=Desktop \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-
-          cmake --build raylib/build -j"$(nproc)"
-
-          sudo cmake --install raylib/build
-          sudo ldconfig
-
-      - name: Build Chain-Lang
-        run: |
-          make release
-
-      - name: Check binary
-        run: |
-          file chainlang
-
-      - name: Package
-        run: |
-          mkdir -p dist
-
-          tar -czf \
-            dist/chainlang-linux-aarch64.tar.gz \
-            chainlang \
-            README.md \
-            LICENSE
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chainlang-linux-aarch64
-          path: dist/chainlang-linux-aarch64.tar.gz
 
 
   # ============================================================
@@ -198,14 +129,15 @@ jobs:
             -DPLATFORM=Desktop \
             -DBUILD_EXAMPLES=OFF \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_FLAGS=-m32 \
-            -DCMAKE_CXX_FLAGS=-m32 \
-            -DCMAKE_EXE_LINKER_FLAGS=-m32 \
-            -DCMAKE_SHARED_LINKER_FLAGS=-m32
+            -DCMAKE_C_FLAGS="-m32" \
+            -DCMAKE_CXX_FLAGS="-m32" \
+            -DCMAKE_EXE_LINKER_FLAGS="-m32" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-m32"
 
           cmake --build raylib/build -j"$(nproc)"
 
           sudo cmake --install raylib/build
+
           sudo ldconfig
 
       - name: Build Chain-Lang
@@ -236,6 +168,78 @@ jobs:
 
 
   # ============================================================
+  # LINUX ARM64
+  # ============================================================
+  build-linux-aarch64:
+    name: Linux aarch64
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            pkg-config \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxxf86vm-dev
+
+      - name: Build raylib
+        run: |
+          git clone \
+            --depth 1 \
+            --branch ${{ env.RAYLIB_VERSION }} \
+            https://github.com/raysan5/raylib.git
+
+          cmake \
+            -S raylib \
+            -B raylib/build \
+            -DPLATFORM=Desktop \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+          cmake --build raylib/build -j"$(nproc)"
+
+          sudo cmake --install raylib/build
+
+          sudo ldconfig
+
+      - name: Build Chain-Lang
+        run: |
+          make release
+
+      - name: Check binary
+        run: |
+          file chainlang
+
+      - name: Package
+        run: |
+          mkdir -p dist
+
+          tar -czf \
+            dist/chainlang-linux-aarch64.tar.gz \
+            chainlang \
+            README.md \
+            LICENSE
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-linux-aarch64
+          path: dist/chainlang-linux-aarch64.tar.gz
+
+
+  # ============================================================
   # LINUX RISC-V64
   # ============================================================
   build-linux-riscv64:
@@ -253,7 +257,7 @@ jobs:
         with:
           platforms: riscv64
 
-      - name: Build inside RISC-V container
+      - name: Build RISC-V64
         run: |
           docker run \
             --rm \
@@ -281,7 +285,7 @@ jobs:
 
               git clone \
                 --depth 1 \
-                --branch '"${RAYLIB_VERSION}"' \
+                --branch 5.5 \
                 https://github.com/raysan5/raylib.git
 
               cmake \
@@ -291,7 +295,7 @@ jobs:
                 -DBUILD_EXAMPLES=OFF \
                 -DCMAKE_BUILD_TYPE=Release
 
-              cmake --build raylib/build -j"$(nproc)"
+              cmake --build raylib/build -j2
 
               cmake --install raylib/build
 
@@ -299,6 +303,10 @@ jobs:
 
               file chainlang
             '
+
+      - name: Check binary
+        run: |
+          file chainlang
 
       - name: Package
         run: |
@@ -336,31 +344,96 @@ jobs:
           install: >-
             git
             tar
+            make
             mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-make
             mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-raylib
+            mingw-w64-x86_64-pkgconf
 
-      - name: Check architecture
+      - name: Check compiler
         shell: msys2 {0}
         run: |
           echo "MSYSTEM=$MSYSTEM"
+
+          echo "Architecture:"
           uname -m
+
+          echo "Compiler:"
           g++ -dumpmachine
           g++ --version
+
+          echo "Make:"
           mingw32-make --version
+
+          echo "CMake:"
           cmake --version
 
+      # ----------------------------------------------------------
+      # Build raylib
+      # ----------------------------------------------------------
+      - name: Download raylib
+        shell: msys2 {0}
+        run: |
+          git clone \
+            --depth 1 \
+            --branch $RAYLIB_VERSION \
+            https://github.com/raysan5/raylib.git
+
+      - name: Build raylib
+        shell: msys2 {0}
+        run: |
+          cd raylib
+
+          cmake \
+            -S . \
+            -B build \
+            -G "MSYS Makefiles" \
+            -DPLATFORM=Desktop \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+          cmake --build build -- -j2
+
+      - name: Install raylib
+        shell: msys2 {0}
+        run: |
+          cd raylib
+
+          cmake \
+            --install build \
+            --prefix /mingw64
+
+      # ----------------------------------------------------------
+      # Build Chain-Lang
+      # ----------------------------------------------------------
       - name: Build Chain-Lang
         shell: msys2 {0}
         run: |
-          mingw32-make release
+          mingw32-make release || {
+            echo "======================================"
+            echo "CHAIN-LANG BUILD FAILED"
+            echo "======================================"
 
+            if [ -f error.txt ]; then
+              cat error.txt
+            fi
+
+            exit 1
+          }
+
+      # ----------------------------------------------------------
+      # Verify
+      # ----------------------------------------------------------
       - name: Check binary
         shell: msys2 {0}
         run: |
           file chainlang.exe
 
+          echo "Architecture:"
+          objdump -f chainlang.exe
+
+      # ----------------------------------------------------------
+      # Package
+      # ----------------------------------------------------------
       - name: Package
         shell: msys2 {0}
         run: |
@@ -380,69 +453,7 @@ jobs:
 
 
   # ============================================================
-  # WINDOWS i686
-  # ============================================================
-  build-windows-i686:
-    name: Windows i686
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW32
-          update: true
-          install: >-
-            git
-            tar
-            mingw-w64-i686-toolchain
-            mingw-w64-i686-make
-            mingw-w64-i686-cmake
-            mingw-w64-i686-raylib
-
-      - name: Check architecture
-        shell: msys2 {0}
-        run: |
-          echo "MSYSTEM=$MSYSTEM"
-          uname -m
-          g++ -dumpmachine
-          g++ --version
-          mingw32-make --version
-          cmake --version
-
-      - name: Build Chain-Lang
-        shell: msys2 {0}
-        run: |
-          mingw32-make release
-
-      - name: Check binary
-        shell: msys2 {0}
-        run: |
-          file chainlang.exe
-
-      - name: Package
-        shell: msys2 {0}
-        run: |
-          mkdir -p dist
-
-          tar -czf \
-            dist/chainlang-windows-i686.tar.gz \
-            chainlang.exe \
-            README.md \
-            LICENSE
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chainlang-windows-i686
-          path: dist/chainlang-windows-i686.tar.gz
-
-
-  # ============================================================
-  # CREATE GITHUB RELEASE
+  # GITHUB RELEASE
   # ============================================================
   release:
     name: Publish GitHub Release
@@ -451,16 +462,19 @@ jobs:
 
     needs:
       - build-linux-x86_64
-      - build-linux-aarch64
       - build-linux-i686
+      - build-linux-aarch64
       - build-linux-riscv64
       - build-windows-x86_64
-      - build-windows-i686
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
-      - name: Download all artifacts
+
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
@@ -474,7 +488,10 @@ jobs:
             -name '*.tar.gz' \
             -exec cp {} release-assets/ \;
 
+          echo "======================================"
           echo "Release files:"
+          echo "======================================"
+
           ls -lh release-assets
 
       - name: Generate SHA256 checksums
