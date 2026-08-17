@@ -207,3 +207,74 @@ jobs:
         with:
           files: release-assets/*
           generate_release_notes: true
+  build-windows-x86_64:
+    name: Windows x86_64
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-raylib
+
+      - name: Build chainlang
+        shell: msys2 {0}
+        run: |
+          make release
+
+      - name: Package
+        shell: msys2 {0}
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-windows-x86_64.tar.gz \
+            chainlang.exe README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-windows-x86_64
+          path: dist/*.tar.gz
+
+
+  # ---------------------------------------------------------------------
+  # Windows i686 (32-bit)
+  # ---------------------------------------------------------------------
+  build-windows-i686:
+    name: Windows i686 (32-bit)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          update: true
+          install: >-
+            mingw-w64-i686-toolchain
+            mingw-w64-i686-cmake
+            mingw-w64-i686-raylib
+
+      - name: Build chainlang
+        shell: msys2 {0}
+        run: |
+          make release
+
+      - name: Package
+        shell: msys2 {0}
+        run: |
+          mkdir -p dist
+          tar -czf dist/chainlang-windows-i686.tar.gz \
+            chainlang.exe README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chainlang-windows-i686
+          path: dist/*.tar.gz
