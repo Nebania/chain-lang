@@ -408,7 +408,7 @@ jobs:
       - name: Build Chain-Lang
         shell: msys2 {0}
         run: |
-          mingw32-make release || {
+          mingw32-make -f makefile.win release || {
             echo "======================================"
             echo "CHAIN-LANG BUILD FAILED"
             echo "======================================"
