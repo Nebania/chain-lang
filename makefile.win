@@ -14,10 +14,6 @@ LDFLAGS := \
 	-lgdi32 \
 	-lwinmm \
 	-lws2_32 \
-	-luser32 \
-	-lshell32 \
-	-limm32 \
-	-lversion
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))

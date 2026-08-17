@@ -73,9 +73,11 @@ int main(int argc, char** argv) {
         std::string arg = argv[i];
         if (arg == "--version") {
             printVersion();
+            return 0;
         }
         else if (arg == "--help") {
             printHelp();
+            return 0;
         }
         else if (arg == "--debug") {
             debugMode = true;
