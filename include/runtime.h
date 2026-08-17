@@ -13,7 +13,7 @@
 #include "env.h"
 #include "parser.h" 
 #include <CREL/CREL.hpp>
-#include "crel_loader.h"
+//#include "crel_loader.h"
 // Native Function type definition
 using NativeFn = std::function<Obj(const std::vector<Obj>&)>;
 

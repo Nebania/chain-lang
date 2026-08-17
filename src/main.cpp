@@ -71,8 +71,13 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; i++) {
 
         std::string arg = argv[i];
-
-        if (arg == "--debug") {
+        if (arg == "--version") {
+            printVersion();
+        }
+        else if (arg == "--help") {
+            printHelp();
+        }
+        else if (arg == "--debug") {
             debugMode = true;
         }
 

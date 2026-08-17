@@ -126,15 +126,17 @@ CREL Runtime::createAPI()
 }
 bool Runtime::loadLibrary(const std::string& path)
 {
+#ifdef _WIN32
+
     HMODULE handle = LoadLibraryA(path.c_str());
 
     if (!handle) {
         DWORD error = GetLastError();
 
         std::cerr
-            << "[CREL] LoadLibraryA failed for: "
+            << "[CREL] loading failed for: "
             << path
-            << " | Windows error: "
+            << " | error: "
             << error
             << std::endl;
 
@@ -153,13 +155,53 @@ bool Runtime::loadLibrary(const std::string& path)
         std::cerr
             << "[CREL] CREL_Init not found in: "
             << path
-            << " | Windows error: "
+            << " | error: "
             << error
             << std::endl;
 
         FreeLibrary(handle);
         return false;
     }
+
+#else
+
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+
+    if (!handle) {
+        std::cerr
+            << "[CREL] loading failed for: "
+            << path
+            << " | error: "
+            << dlerror()
+            << std::endl;
+
+        return false;
+    }
+
+    using InitFn = void (*)(CREL*);
+
+    // Clear any previous dlerror
+    dlerror();
+
+    auto init = reinterpret_cast<InitFn>(
+        dlsym(handle, "CREL_Init")
+    );
+
+    const char* error = dlerror();
+
+    if (error != nullptr) {
+        std::cerr
+            << "[CREL] CREL_Init not found in: "
+            << path
+            << " | error: "
+            << error
+            << std::endl;
+
+        dlclose(handle);
+        return false;
+    }
+
+#endif
 
     CREL api(
         [this](const std::string& name, NativeFn fn) {

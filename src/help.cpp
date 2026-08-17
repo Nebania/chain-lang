@@ -2,7 +2,7 @@
 #include <iostream>
 
 void printVersion() {
-    std::cout << "Chain Version 0.5b (Full Release) \n" << std::endl;
+    std::cout << "Chain Version 0.5.2 (Full Release) \n" << std::endl;
 } 
 
 void printHelp() {
@@ -24,6 +24,7 @@ USAGE:
   chain/chainlang --time <file>    : Execute and measure execution time (Profiler).
   chain/chainlang --help           : Show this manual.
   chain/chainlang --version        : Show current version.
+  chain/chainlang --crel <file>    : Loads CREL library
 
 DATA TYPES:
   Integer  : 10, 25, -5
