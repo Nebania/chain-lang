@@ -2,13 +2,13 @@
 #include <iostream>
 
 void printVersion() {
-    std::cout << "Chain Version 0.5.2 (Full Release) \n" << std::endl;
+    std::cout << "Chain Version 0.6.0 (Full Release) \n" << std::endl;
 } 
 
 void printHelp() {
     std::cout << R"(
 ========================================================
-           NEBANIA CHAIN v0.5 (Full Release) HELP
+           NEBANIA CHAIN v0.6.0 (Full Release) HELP
 ========================================================
 History:
 Created by   : Pilot0253
