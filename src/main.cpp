@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
 
     // Jika tidak ada argumen file, masuk ke REPL
     if (argc < 2 || argc == 1 + flagsCount) {
-        std::cout << "Nebania Chain v0.5 (Analyzer)" << std::endl;
+        std::cout << "Nebania Chain v0.6.0 (Analyzer)" << std::endl;
         if (debugMode) std::cout << "[DEBUG MODE ACTIVE]" << std::endl;
         if (timeMode) std::cout << "[TIME PROFILER ACTIVE]" << std::endl;
         std::cout << "Type 'exit' to quit." << std::endl;
