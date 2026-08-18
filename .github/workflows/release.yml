@@ -156,6 +156,14 @@ jobs:
       - name: Build chainlang
         run: make release
 
+      - name: Verify stamped version
+        run: |
+          ./chainlang --version | tee /tmp/version-output.txt
+          grep -q "${{ needs.prepare.outputs.version }}" /tmp/version-output.txt || {
+            echo "error: built binary does not report the expected version (${{ needs.prepare.outputs.version }})" >&2
+            exit 1
+          }
+
       - name: Package
         run: |
           mkdir -p dist
@@ -398,6 +406,18 @@ jobs:
         run: |
           file chainlang.exe
           objdump -f chainlang.exe
+
+      # ---------------------------------------------------------------
+      # Verify stamped version
+      # ---------------------------------------------------------------
+      - name: Verify stamped version
+        shell: msys2 {0}
+        run: |
+          ./chainlang.exe --version | tee /tmp/version-output.txt
+          grep -q "${{ needs.prepare.outputs.version }}" /tmp/version-output.txt || {
+            echo "error: built binary does not report the expected version (${{ needs.prepare.outputs.version }})" >&2
+            exit 1
+          }
 
       # ---------------------------------------------------------------
       # Package
