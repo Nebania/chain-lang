@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "types.h" 
 #include <stdexcept>
 #include <iostream>
 
@@ -13,7 +14,7 @@ bool Parser::match(TokenType type) {
 }
 const Token& Parser::consume(TokenType type, const std::string& err) { 
     if (match(type)) return tokens[current - 1]; 
-    throw std::runtime_error(err);
+    throw ChainError(peek().line, peek().column, err + " (Found: '" + peek().value + "')");
 }
 bool Parser::isAtEnd() const { return peek().type == TokenType::EOF_TOKEN; }
 
@@ -40,12 +41,21 @@ std::vector<std::unique_ptr<Expr>> Parser::parseArguments() {
 }
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
+    while (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+        advance();
+        if (isAtEnd()) return nullptr;
+    }
+    
     if (match(TokenType::CLEAR) || match(TokenType::CLS)) return std::make_unique<ClearStmt>();
     if (match(TokenType::CLASS)) return parseClass(); 
     if (match(TokenType::IMPORT)) {
     std::string path = consume(TokenType::STRING, "Expected file path (string) after import").value;
     return std::make_unique<ImportStmt>(path);
 }
+
+    if (match(TokenType::MATCH)) {
+        return parseMatch();
+    }
 
     // --- EXTERN C++ PARSING LOGIC ---
     if (match(TokenType::EXTERN)) {
@@ -121,7 +131,8 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
             if (name == "time" || name == "math" || name == "io"   || 
                 name == "os"   || name == "str"  || name == "list" ||
                 name == "fs"   || name == "term" || name == "dict" ||
-                name == "net"  || name == "audio"|| name == "gui") { // <-- Add here too
+                name == "net"  || name == "audio"|| name == "gui"  ||
+                name == "webview" || name == "thread") { 
                 
                 name += "." + method;
                 isMethodCall = false;
@@ -131,7 +142,6 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
             }
         }
 
-        // 1. Handle Assignment (r1.energy = 10)
         if (match(TokenType::ASSIGN)) { 
             std::string fullName = name + (isMethodCall ? "." + method : "");
             auto value = parseExpression(); 
@@ -171,7 +181,11 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
              return std::make_unique<CallStmt>(name, std::move(emptyArgs));
         }
     }
-    advance(); 
+    
+    if (!isAtEnd()) {
+        throw ChainError(peek().line, peek().column, "Invalid syntax or unexpected token");
+    }
+    
     return nullptr;
 }
 
@@ -307,6 +321,10 @@ std::unique_ptr<Expr> Parser::parsePostfix() {
 std::unique_ptr<Expr> Parser::parsePrimary() {
     if (match(TokenType::THIS)) return std::make_unique<ThisExpr>(tokens[current - 1]);
     
+    if (match(TokenType::FUNC)) {
+        return std::make_unique<LambdaExpr>(parseFunc());
+    }
+
     if (match(TokenType::NEW)) {
         std::string className = consume(TokenType::IDENTIFIER, "Expected class name").value;
         consume(TokenType::LPAREN, "Expected '(' after class name");
@@ -382,7 +400,22 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
                 method = consume(TokenType::IDENTIFIER, "Expected method").value;
             }
 
-            name += "." + method; 
+            if (name == "time" || name == "math" || name == "io"   || 
+                name == "os"   || name == "str"  || name == "list" ||
+                name == "fs"   || name == "term" || name == "dict" ||
+                name == "net"  || name == "audio"|| name == "gui") {
+                
+                name += "." + method; 
+                if (peek().type == TokenType::LPAREN) {
+                    auto args = parseArguments();
+                    return std::make_unique<CallExpr>(name, std::move(args));
+                }
+                return std::make_unique<VariableExpr>(name);
+            } 
+            else {
+                auto objExpr = std::make_unique<VariableExpr>(name);
+                return std::make_unique<GetExpr>(std::move(objExpr), method);
+            }
         }
         
         if (peek().type == TokenType::LPAREN) {
@@ -577,18 +610,35 @@ std::unique_ptr<WindowDecl> Parser::parseWindow() {
 }
 
 std::unique_ptr<FuncDecl> Parser::parseFunc() {
-    std::string name;
-    if (match(TokenType::INIT)) name = "init";
-    else name = consume(TokenType::IDENTIFIER, "Expected func name").value;
+    std::string name = "";
+    if (peek().type != TokenType::LPAREN) { 
+        if (match(TokenType::INIT)) name = "init";
+        else name = consume(TokenType::IDENTIFIER, "Expected func name").value;
+    }
+    
     std::vector<std::string> params;
+    auto func = std::make_unique<FuncDecl>(name, params); 
+    
     if (match(TokenType::LPAREN)) {
         if (peek().type != TokenType::RPAREN) {
-            do { params.push_back(consume(TokenType::IDENTIFIER, "Expected param").value);
+            do { 
+                std::string paramName = consume(TokenType::IDENTIFIER, "Expected param").value;
+                func->params.push_back(paramName);
+
+                if (match(TokenType::COLON)) {
+                    func->paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected type").value);
+                } else {
+                    func->paramTypes.push_back("Any");
+                }
             } while (match(TokenType::COMMA));
         }
         consume(TokenType::RPAREN, "Expected ')'");
     }
-    auto func = std::make_unique<FuncDecl>(name, params);
+
+    if (match(TokenType::ARROW)) {
+        func->returnType = consume(TokenType::IDENTIFIER, "Expected return type").value;
+    }
+
     if (match(TokenType::LBRACE)) {
         while (peek().type != TokenType::RBRACE && !isAtEnd()) {
             if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) { advance(); continue; }
@@ -609,14 +659,29 @@ std::unique_ptr<FuncDecl> Parser::parseFunc() {
 
 std::unique_ptr<Stmt> Parser::parseClass() {
     std::string name = consume(TokenType::IDENTIFIER, "Expected class name").value;
+    
+    std::string superclass = "";
+    if (match(TokenType::COLON)) { 
+        superclass = consume(TokenType::IDENTIFIER, "Expected superclass name").value;
+    }
+    
     consume(TokenType::LBRACE, "Expected '{'");
     std::vector<std::unique_ptr<FuncDecl>> methods;
+    
     while (peek().type != TokenType::RBRACE && !isAtEnd()) {
-        if (match(TokenType::FUNC)) { methods.push_back(parseFunc()); } 
-        else { advance(); }
+        if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+            advance();
+            continue;
+        }
+        
+        if (match(TokenType::FUNC)) { 
+            methods.push_back(parseFunc()); 
+        } else { 
+            advance(); 
+        }
     }
     consume(TokenType::RBRACE, "Expected '}'");
-    return std::make_unique<ClassDecl>(name, std::move(methods));
+    return std::make_unique<ClassDecl>(name, superclass, std::move(methods));
 }
 
 std::unique_ptr<ConnectStmt> Parser::parseConnect() {
@@ -638,21 +703,77 @@ std::unique_ptr<Stmt> Parser::parseReturn() {
 }
 
 std::unique_ptr<Stmt> Parser::parseTry() {
-    consume(TokenType::LBRACE, "Expected '{'");
+    consume(TokenType::LBRACE, "Expected '{' after try");
     std::vector<std::unique_ptr<Stmt>> tryBody;
+    
     while (peek().type != TokenType::RBRACE && !isAtEnd()) {
-        tryBody.push_back(parseStatement());
+        if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+            advance(); continue;
+        }
+        auto s = parseStatement();
+        if (s) tryBody.push_back(std::move(s));
     }
-    consume(TokenType::RBRACE, "Expected '}'");
-    consume(TokenType::CATCH, "Expected 'catch'");
-    consume(TokenType::LPAREN, "Expected '('");
-    std::string errorVar = consume(TokenType::IDENTIFIER, "Expected var").value;
-    consume(TokenType::RPAREN, "Expected ')'");
-    consume(TokenType::LBRACE, "Expected '{'");
+    consume(TokenType::RBRACE, "Expected '}' after try block");
+
+    while (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+        advance();
+    }
+
+    consume(TokenType::CATCH, "Expected 'catch' after try block");
+    consume(TokenType::LPAREN, "Expected '(' after catch");
+    std::string errorVar = consume(TokenType::IDENTIFIER, "Expected error variable name").value;
+    consume(TokenType::RPAREN, "Expected ')' after error variable");
+    
+    consume(TokenType::LBRACE, "Expected '{' after catch condition");
     std::vector<std::unique_ptr<Stmt>> catchBody;
+    
     while (peek().type != TokenType::RBRACE && !isAtEnd()) {
-        catchBody.push_back(parseStatement());
+        if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+            advance(); continue;
+        }
+        auto s = parseStatement();
+        if (s) catchBody.push_back(std::move(s));
     }
-    consume(TokenType::RBRACE, "Expected '}'");
+    consume(TokenType::RBRACE, "Expected '}' after catch block");
+
     return std::make_unique<TryStmt>(std::move(tryBody), std::move(catchBody), errorVar);
+}
+
+std::unique_ptr<Stmt> Parser::parseMatch() {
+    auto value = parseExpression();
+    consume(TokenType::LBRACE, "Expected '{' after match value");
+    
+    std::vector<MatchCase> cases;
+    while (peek().type != TokenType::RBRACE && !isAtEnd()) {
+        if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+            advance();
+            continue;
+        }
+        
+        MatchCase mCase;
+        if (peek().type == TokenType::IDENTIFIER && peek().value == "_") {
+            advance(); // Consume '_'
+            mCase.pattern = nullptr; 
+        } else {
+            mCase.pattern = parseExpression();
+        }
+        
+        consume(TokenType::FAT_ARROW, "Expected '=>' in match case");
+
+        if (match(TokenType::LBRACE)) {
+            while (peek().type != TokenType::RBRACE && !isAtEnd()) {
+                if (peek().type == TokenType::NEWLINE || peek().type == TokenType::INDENT || peek().type == TokenType::DEDENT) {
+                    advance();
+                    continue;
+                }
+                mCase.body.push_back(parseStatement());
+            }
+            consume(TokenType::RBRACE, "Expected '}' after match case block");
+        } else {
+            mCase.body.push_back(parseStatement());
+        }
+        cases.push_back(std::move(mCase));
+    }
+    consume(TokenType::RBRACE, "Expected '}' after match block");
+    return std::make_unique<MatchStmt>(std::move(value), std::move(cases));
 }

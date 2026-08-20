@@ -1,0 +1,52 @@
+# === NEBULA OS SECURITY SCANNER ===
+
+# 1. Configuration (Test Multiline Dictionary)
+set config = {
+    "target": "System Root",
+    "scan_level": 3,
+    "log_file": "security_log.txt"
+}
+
+# 2. Threat Database (Test Multiline List)
+set threats = [
+    "Trojan.Win32.Generic",
+    "Rootkit.Nebula.Hidden",
+    "Ransomware.WannaCry",
+    "Adware.SuperFish"
+]
+
+# 3. Clean up old log
+if io.exists(config["log_file"])
+    io.remove(config["log_file"])
+
+# 4. Header Laporan
+io.write(config["log_file"], "=== SECURITY REPORT ===\nTarget: " + config["target"] + "\n\n", false)
+print("Starting Security Scan on: " + config["target"])
+
+# 5. Proses Scanning
+set id = 0
+for threat in threats
+    print("\nScanning for signature: " + threat)
+    
+    # Run real Linux/Windows shell command for visual effect
+    # (Using 'echo' to keep it safe on all OSes)
+    sh "echo '  >> Analyzing memory segments...'"
+    
+    # Simulated detection logic (we assume item 2 is malicious)
+    if id == 1
+        print("  [!] CRITICAL ALERT: Threat Detected!")
+        io.append(config["log_file"], "[ALERT] FOUND: " + threat + "\n")
+    else
+        print("  [OK] No threats found.")
+        io.append(config["log_file"], "[INFO] Clean: " + threat + "\n")
+    
+    set id = id + 1
+
+# 6. Done
+print("\nScan Complete.")
+print("Log saved to: " + config["log_file"])
+
+# Show the newly created log content
+print("\n--- VIEW LOG ---")
+set log_data = io.read(config["log_file"])
+print(log_data)

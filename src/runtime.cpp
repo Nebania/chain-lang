@@ -22,6 +22,7 @@
 #include <cmath>
 #include <sstream>
 #include <thread>
+#include <future>
 #include <chrono>
 #include <filesystem>
 #include <random> 
@@ -38,6 +39,16 @@
 #include "link_wrapper.h"
 #include "link_xml.h"
 #include "link_audio.h"
+#include "link_webview.h"
+
+bool isEqualObj(const Obj& a, const Obj& b) {
+    if (a.as.index() != b.as.index()) return false;
+    if (std::holds_alternative<int>(a.as)) return std::get<int>(a.as) == std::get<int>(b.as);
+    if (std::holds_alternative<double>(a.as)) return std::get<double>(a.as) == std::get<double>(b.as);
+    if (std::holds_alternative<std::string>(a.as)) return std::get<std::string>(a.as) == std::get<std::string>(b.as);
+    if (std::holds_alternative<bool>(a.as)) return std::get<bool>(a.as) == std::get<bool>(b.as);
+    return false;
+}
 
 struct ProfilerTimer {
     std::string name;
@@ -97,6 +108,33 @@ std::string Runtime::objToString(const Obj& val) {
     if (std::holds_alternative<bool>(val.as)) {
         return std::get<bool>(val.as) ? "true" : "false";
     }
+    
+    if (std::holds_alternative<std::shared_ptr<List>>(val.as)) {
+        auto list = std::get<std::shared_ptr<List>>(val.as);
+        std::string res = "[";
+        for (size_t i = 0; i < list->size(); ++i) {
+            if (std::holds_alternative<std::string>((*list)[i].as)) res += "\"" + objToString((*list)[i]) + "\"";
+            else res += objToString((*list)[i]);
+            if (i < list->size() - 1) res += ", ";
+        }
+        res += "]";
+        return res;
+    }
+    if (std::holds_alternative<std::shared_ptr<Dict>>(val.as)) {
+        auto dict = std::get<std::shared_ptr<Dict>>(val.as);
+        std::string res = "{";
+        int i = 0;
+        for (const auto& pair : *dict) {
+            res += "\"" + pair.first + "\": ";
+            if (std::holds_alternative<std::string>(pair.second.as)) res += "\"" + objToString(pair.second) + "\"";
+            else res += objToString(pair.second);
+            if (i < (int)dict->size() - 1) res += ", ";
+            i++;
+        }
+        res += "}";
+        return res;
+    }
+    
     return ""; 
 }
 
@@ -124,107 +162,31 @@ CREL Runtime::createAPI()
         }
     );
 }
+
 bool Runtime::loadLibrary(const std::string& path)
 {
-#ifdef _WIN32
-
-    HMODULE handle = LoadLibraryA(path.c_str());
-
-    if (!handle) {
-        DWORD error = GetLastError();
-
-        std::cerr
-            << "[CREL] loading failed for: "
-            << path
-            << " | error: "
-            << error
-            << std::endl;
-
-        return false;
-    }
-
-    using InitFn = void (*)(CREL*);
-
-    auto init = reinterpret_cast<InitFn>(
-        GetProcAddress(handle, "CREL_Init")
-    );
-
-    if (!init) {
-        DWORD error = GetLastError();
-
-        std::cerr
-            << "[CREL] CREL_Init not found in: "
-            << path
-            << " | error: "
-            << error
-            << std::endl;
-
-        FreeLibrary(handle);
-        return false;
-    }
-
-#else
-
-    void* handle = dlopen(path.c_str(), RTLD_LAZY);
-
-    if (!handle) {
-        std::cerr
-            << "[CREL] loading failed for: "
-            << path
-            << " | error: "
-            << dlerror()
-            << std::endl;
-
-        return false;
-    }
-
-    using InitFn = void (*)(CREL*);
-
-    // Clear any previous dlerror
-    dlerror();
-
-    auto init = reinterpret_cast<InitFn>(
-        dlsym(handle, "CREL_Init")
-    );
-
-    const char* error = dlerror();
-
-    if (error != nullptr) {
-        std::cerr
-            << "[CREL] CREL_Init not found in: "
-            << path
-            << " | error: "
-            << error
-            << std::endl;
-
-        dlclose(handle);
-        return false;
-    }
-
-#endif
-
     CREL api(
         [this](const std::string& name, NativeFn fn) {
             nativeRegistry[name] = std::move(fn);
         }
     );
 
-    init(&api);
-
-    return true;
+    return LibraryLoader::load(path, api);
 }
+
 void Runtime::initNativeFunctions() {
     
     nativeRegistry["print"] = [this](const std::vector<Obj>& args) -> Obj {
-    for (size_t i = 0; i < args.size(); ++i) {
-        std::string rawOutput = objToString(args[i]);
-        std::cout << Sys::unescape(rawOutput);
-        
-        if (i < args.size() - 1) std::cout << " ";
-    }
-    std::cout << "\n";
-    return Obj(0);
-};
+        for (size_t i = 0; i < args.size(); ++i) {
+            std::string rawOutput = objToString(args[i]);
+            std::cout << Sys::unescape(rawOutput); 
+            
+            if (i < args.size() - 1) std::cout << " ";
+        }
+
+        std::cout << std::endl; 
+        return Obj(0);
+    };
     
     nativeRegistry["input"] = [this](const std::vector<Obj>& args) -> Obj {
         if (!args.empty()) {
@@ -433,7 +395,7 @@ void Runtime::initNativeFunctions() {
         auto list = std::make_shared<List>();
         try {
             for (const auto& entry : fs::directory_iterator(path)) {
-                list->push_back(Obj(entry.path().filename().string()));
+                list->push_back(Value(entry.path().filename().string()));
             }
         } catch(...) {}
         return Obj(list);
@@ -510,7 +472,7 @@ void Runtime::initNativeFunctions() {
         if (args.size() < 2) return Obj(std::make_shared<List>());
         auto vec = SysString::split(objToString(args[0]), objToString(args[1]));
         auto list = std::make_shared<List>();
-        for(const auto& v : vec) list->push_back(Obj(v));
+        for(const auto& v : vec) list->push_back(Value(v));
         return Obj(list);
     };
 
@@ -531,7 +493,6 @@ void Runtime::initNativeFunctions() {
         return Obj(full.rfind(prefix, 0) == 0);
     };
 
-    // 3. str.substr("cd Desktop", 3) -> "Desktop" (Substring operation)
     nativeRegistry["str.substr"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.size() < 2) return Obj("");
         std::string str = objToString(args[0]);
@@ -540,9 +501,19 @@ void Runtime::initNativeFunctions() {
         if (std::holds_alternative<int>(args[1].as)) start = std::get<int>(args[1].as);
         else if (std::holds_alternative<double>(args[1].as)) start = (int)std::get<double>(args[1].as);
 
-        if (start >= str.length()) return Obj("");
+        if (start < 0 || start >= str.length()) return Obj("");
+
+        if (args.size() >= 3) {
+            int length = 0;
+            if (std::holds_alternative<int>(args[2].as)) length = std::get<int>(args[2].as);
+            else if (std::holds_alternative<double>(args[2].as)) length = (int)std::get<double>(args[2].as);
+            
+            return Obj(str.substr(start, length));
+        }
+
         return Obj(str.substr(start));
     };
+
     nativeRegistry["str.merge"] = [this](const std::vector<Obj>& args) -> Obj {
     if (args.size() < 2) return Obj("");
     if (!std::holds_alternative<std::shared_ptr<List>>(args[0].as)) return Obj("");
@@ -560,16 +531,17 @@ void Runtime::initNativeFunctions() {
     // ==========================================
     // 6. MATH LIBRARY
     // ==========================================
-    auto asInt = [](const Obj& o) -> int {
-        if (std::holds_alternative<int>(o.as)) return std::get<int>(o.as);
-        if (std::holds_alternative<double>(o.as)) return (int)std::get<double>(o.as);
+    auto asDouble = [](const Obj& o) -> double {
+        if (std::holds_alternative<double>(o.as)) return std::get<double>(o.as);
+        if (std::holds_alternative<int>(o.as)) return (double)std::get<int>(o.as);
         if (std::holds_alternative<std::string>(o.as)) {
-            try { return std::stoi(std::get<std::string>(o.as)); } catch(...) { return 0; }
+            try { return std::stod(std::get<std::string>(o.as)); } catch(...) { return 0.0; }
         }
-        return 0;
+        return 0.0;
     };
 
     nativeRegistry["math.random"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args;
         std::uniform_real_distribution<> dis(0.0, 1.0);
         return Obj(dis(gen)); 
     };
@@ -582,27 +554,53 @@ void Runtime::initNativeFunctions() {
         return Obj(dis(gen));
     };
 
-    nativeRegistry["math.pi"] = [](const std::vector<Obj>& args) -> Obj { return Obj(SysMath::pi()); };
+    nativeRegistry["math.pi"] = [](const std::vector<Obj>& args) -> Obj { (void)args; return Obj(SysMath::pi()); };
+    nativeRegistry["math.e"]  = [](const std::vector<Obj>& args) -> Obj { (void)args; return Obj(SysMath::e()); };
     
-    nativeRegistry["math.sin"] = [asInt](const std::vector<Obj>& args) -> Obj { 
-        return args.empty() ? Obj(0.0) : Obj(SysMath::sin(asInt(args[0]))); 
-    };
-    nativeRegistry["math.cos"] = [asInt](const std::vector<Obj>& args) -> Obj { 
-        return args.empty() ? Obj(0.0) : Obj(SysMath::cos(asInt(args[0]))); 
-    };
-    nativeRegistry["math.sqrt"] = [asInt](const std::vector<Obj>& args) -> Obj { 
-        return args.empty() ? Obj(0.0) : Obj(SysMath::sqrt(asInt(args[0]))); 
-    };
-    nativeRegistry["math.pow"] = [asInt](const std::vector<Obj>& args) -> Obj {
+    // Basic Math & Trigonometry
+    nativeRegistry["math.sin"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::sin(asDouble(args[0]))); };
+    nativeRegistry["math.cos"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::cos(asDouble(args[0]))); };
+    nativeRegistry["math.tan"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::tan(asDouble(args[0]))); };
+    nativeRegistry["math.sqrt"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::sqrt(asDouble(args[0]))); };
+    nativeRegistry["math.abs"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::abs(asDouble(args[0]))); };
+    
+    nativeRegistry["math.pow"] = [asDouble](const std::vector<Obj>& args) -> Obj {
         if (args.size() < 2) return Obj(0.0);
-        double base = asInt(args[0]);
-        double exp = asInt(args[1]);
-        return Obj(std::pow(base, exp));
+        return Obj(SysMath::pow(asDouble(args[0]), asDouble(args[1])));
     };
-    nativeRegistry["math.abs"] = [asInt](const std::vector<Obj>& args) -> Obj {
-        if (args.empty()) return Obj(0.0);
-        double val = asInt(args[0]);
-        return Obj(std::abs(val)); 
+
+    // Inverse Trigonometry
+    nativeRegistry["math.asin"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::asin(asDouble(args[0]))); };
+    nativeRegistry["math.acos"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::acos(asDouble(args[0]))); };
+    nativeRegistry["math.atan"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::atan(asDouble(args[0]))); };
+    nativeRegistry["math.atan2"] = [asDouble](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 2) return Obj(0.0);
+        return Obj(SysMath::atan2(asDouble(args[0]), asDouble(args[1])));
+    };
+
+    // Hyperbolic
+    nativeRegistry["math.sinh"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::sinh(asDouble(args[0]))); };
+    nativeRegistry["math.cosh"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::cosh(asDouble(args[0]))); };
+    nativeRegistry["math.tanh"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::tanh(asDouble(args[0]))); };
+
+    // Exponential & Logarithm
+    nativeRegistry["math.exp"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::exp(asDouble(args[0]))); };
+    nativeRegistry["math.log"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::log(asDouble(args[0]))); };
+    nativeRegistry["math.log10"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::log10(asDouble(args[0]))); };
+    nativeRegistry["math.log2"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::log2(asDouble(args[0]))); };
+
+    // Rounding & Utility
+    nativeRegistry["math.ceil"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::ceil(asDouble(args[0]))); };
+    nativeRegistry["math.floor"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::floor(asDouble(args[0]))); };
+    nativeRegistry["math.round"] = [asDouble](const std::vector<Obj>& args) -> Obj { return args.empty() ? Obj(0.0) : Obj(SysMath::round(asDouble(args[0]))); };
+    
+    nativeRegistry["math.min"] = [asDouble](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 2) return Obj(0.0);
+        return Obj(SysMath::min(asDouble(args[0]), asDouble(args[1])));
+    };
+    nativeRegistry["math.max"] = [asDouble](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 2) return Obj(0.0);
+        return Obj(SysMath::max(asDouble(args[0]), asDouble(args[1])));
     };
     
     // ==========================================
@@ -624,10 +622,11 @@ void Runtime::initNativeFunctions() {
         int limit = 0;
         if (!args.empty() && std::holds_alternative<int>(args[0].as)) limit = std::get<int>(args[0].as);
         auto list = std::make_shared<List>();
-        for(int i=0; i<limit; i++) list->push_back(Obj(i));
+        for(int i=0; i<limit; i++) list->push_back(Value(i));
         return Obj(list);
     };
     nativeRegistry["term.clear"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args;
         std::cout << "\033[2J\033[H";
         return Obj(0);
     };
@@ -703,8 +702,51 @@ void Runtime::initNativeFunctions() {
     };
 
     // ==========================================
-    // GUI MODULE (Bridge to src/link_gui.cpp)
+    // 8. DICTIONARY FUNCTION ADDED
     // ==========================================
+    nativeRegistry["dict.keys"] = [](const std::vector<Obj>& args) -> Obj {
+        if (args.empty()) return Obj(std::make_shared<List>());
+        if (std::holds_alternative<std::shared_ptr<Dict>>(args[0].as)) {
+            auto dict = std::get<std::shared_ptr<Dict>>(args[0].as);
+            auto list = std::make_shared<List>();
+            for (const auto& pair : *dict) {
+                list->push_back(Value(pair.first)); // Masukkan nama key ke dalam list
+            }
+            return Obj(list);
+        }
+        return Obj(std::make_shared<List>());
+    };
+
+    nativeRegistry["dict.has"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.size() >= 2 && std::holds_alternative<std::shared_ptr<Dict>>(args[0].as)) {
+            auto dict = std::get<std::shared_ptr<Dict>>(args[0].as);
+            std::string key = objToString(args[1]);
+            return Obj(dict->find(key) != dict->end());
+        }
+        return Obj(false);
+    };
+
+    nativeRegistry["dict.remove"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.size() >= 2 && std::holds_alternative<std::shared_ptr<Dict>>(args[0].as)) {
+            auto dict = std::get<std::shared_ptr<Dict>>(args[0].as);
+            std::string key = objToString(args[1]);
+            return Obj(dict->erase(key) > 0); // Hapus key
+        }
+        return Obj(false);
+    };
+
+    // ==========================================
+    // 9. GUI MODULE 
+    // ==========================================
+
+    auto asInt = [](const Obj& o) -> int {
+        if (std::holds_alternative<int>(o.as)) return std::get<int>(o.as);
+        if (std::holds_alternative<double>(o.as)) return (int)std::get<double>(o.as);
+        if (std::holds_alternative<std::string>(o.as)) {
+            try { return std::stoi(std::get<std::string>(o.as)); } catch(...) { return 0; }
+        }
+        return 0;
+    };
     
     nativeRegistry["gui_get_char"] = [](const std::vector<Obj>& args) -> Obj {
         return Obj(SysGui::getCharPressed());
@@ -801,6 +843,18 @@ void Runtime::initNativeFunctions() {
         return Obj(0);
     };
 
+    nativeRegistry["gui_line"] = [asInt, this](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 6) return Obj(0);
+        int x1 = asInt(args[0]);
+        int y1 = asInt(args[1]);
+        int x2 = asInt(args[2]);
+        int y2 = asInt(args[3]);
+        int thick = asInt(args[4]);
+        std::string color = objToString(args[5]);
+        SysGui::drawLine(x1, y1, x2, y2, thick, color);
+        return Obj(0);
+    };
+
 	nativeRegistry["gui_is_mouse_down"] = [this](const std::vector<Obj>& args) -> Obj {
         return Obj(SysGui::isMouseDown());
     };
@@ -879,9 +933,17 @@ void Runtime::initNativeFunctions() {
     nativeRegistry["gui_get_time"] = [](const std::vector<Obj>& args) -> Obj {
         return Obj(SysGui::getTime());
     };
+    nativeRegistry["gui_begin_clip"] = [asInt](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 4) return Obj(0);
+        SysGui::beginScissor(asInt(args[0]), asInt(args[1]), asInt(args[2]), asInt(args[3]));
+        return Obj(0);
+    };
+    nativeRegistry["gui_end_clip"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args; SysGui::endScissor(); return Obj(0);
+    };
 
     // ==========================================
-    // AUDIO MODULE (Bridge to src/link_audio.cpp)
+    // 10. AUDIO MODULE 
     // ==========================================
     nativeRegistry["audio.init"] = [](const std::vector<Obj>& args) -> Obj {
         SysAudio::init();
@@ -967,8 +1029,8 @@ void Runtime::initNativeFunctions() {
         return Obj((double)SysAudio::getSpectrum(band)); 
     };
      // ==========================================
-    // XML MODULE (Bridge to src/link_xml.cpp)
-    // ==========================================
+     // 11. XML MODULE
+     // ==========================================
     nativeRegistry["xml_LoadFile"] = [this](const std::vector<Obj>& args) -> Obj {
         std::string path = objToString(args[0]);
 
@@ -1019,6 +1081,82 @@ void Runtime::initNativeFunctions() {
 
         return Obj(LinkXML::getElementText(element));
     };
+
+    // ==========================================
+    // 12. MULTITHREADING / CONCURRENCY MODULE
+    // ==========================================
+    nativeRegistry["thread.spawn"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.empty()) return Obj(false);
+
+        Obj callee = args[0];
+ 
+        if (std::holds_alternative<std::shared_ptr<LinkFunction>>(callee.as)) {
+            auto funcObj = std::get<std::shared_ptr<LinkFunction>>(callee.as);
+  
+            std::vector<Obj> threadArgs;
+            for (size_t i = 1; i < args.size(); i++) {
+                threadArgs.push_back(args[i]);
+            }
+
+            std::thread t([this, funcObj, threadArgs]() {
+                auto prevEnv = currentEnv;
+    
+                auto threadEnv = std::make_shared<Environment>(funcObj->closure);
+                FuncDecl* fn = funcObj->declaration;
+                
+                for (size_t i = 0; i < fn->params.size(); ++i) {
+                    if (i < threadArgs.size()) threadEnv->define(fn->params[i], threadArgs[i]);
+                }
+                
+                auto tempEnv = currentEnv;
+                currentEnv = threadEnv;
+                try {
+                    for (auto& s : fn->body) runStatement(s.get());
+                } catch (...) {
+                    
+                }
+                currentEnv = tempEnv;
+            });
+            
+            t.detach();
+            return Obj(true);
+        }
+        
+        std::cout << "Runtime Error: thread.spawn requires a function as first argument.\n";
+        return Obj(false);
+    };
+
+    // ==========================================
+    // 13. WEBVIEW MODULE (NATIVE DESKTOP APPS)
+    // ==========================================
+    nativeRegistry["webview.show"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.size() < 4) {
+            std::cout << "Runtime Error: webview.show butuh 4 argumen (title, width, height, html)\n";
+            return Obj(false);
+        }
+        
+        std::string title = objToString(args[0]);
+        int width = 800;
+        int height = 600;
+        
+        if (std::holds_alternative<int>(args[1].as)) width = std::get<int>(args[1].as);
+        else if (std::holds_alternative<double>(args[1].as)) width = (int)std::get<double>(args[1].as);
+        
+        if (std::holds_alternative<int>(args[2].as)) height = std::get<int>(args[2].as);
+        else if (std::holds_alternative<double>(args[2].as)) height = (int)std::get<double>(args[2].as);
+        
+        std::string html = objToString(args[3]);
+
+        SysWebview::create(title, width, height, html);
+        
+        return Obj(true);
+    };
+    nativeRegistry["webview.eval"] = [this](const std::vector<Obj>& args) -> Obj {
+        if (args.empty()) return Obj(false);
+        std::string js = objToString(args[0]);
+        SysWebview::eval(js);
+        return Obj(true);
+    };
 }
 
 bool Runtime::isTruthy(const Obj& o) {
@@ -1033,18 +1171,22 @@ FuncDecl* Runtime::findMethod(LinkClass* klass, const std::string& name) {
     if (klass->methods.count(name)) {
         return dynamic_cast<FuncDecl*>(klass->methods[name]);
     }
+    if (klass->superclass) {
+        return findMethod(klass->superclass.get(), name);
+    }
     return nullptr;
 }
 
 void Runtime::printObj(const Obj& val) {
     std::cout << objToString(val);
 }
+
 Obj Runtime::evaluateExpr(Expr* expr) {
     if (!expr) return Obj();
 
-    // =========================================================
-    // 1. LITERALS & VARIABLES (Tetap Sama)
-    // =========================================================
+    // =======================
+    // 1. LITERALS & VARIABLES
+    // =======================
     if (auto num = dynamic_cast<NumberExpr*>(expr)) return Obj(num->value);
     if (auto flt = dynamic_cast<FloatExpr*>(expr)) return Obj(flt->value);
     if (auto str = dynamic_cast<StringExpr*>(expr)) return Obj(str->value);
@@ -1052,9 +1194,9 @@ Obj Runtime::evaluateExpr(Expr* expr) {
     if (auto bl = dynamic_cast<BoolExpr*>(expr)) return Obj(bl->value);
     if (auto var = dynamic_cast<VariableExpr*>(expr)) return currentEnv->get(var->name);
 
-    // =========================================================
-    // 2. DATA STRUCTURES (Tetap Sama)
-    // =========================================================
+    // ==================
+    // 2. DATA STRUCTURES 
+    // ==================
     if (auto arr = dynamic_cast<ArrayExpr*>(expr)) {
         auto list = std::make_shared<List>();
         for (auto& el : arr->elements) list->push_back(evaluateExpr(el.get()));
@@ -1071,9 +1213,9 @@ Obj Runtime::evaluateExpr(Expr* expr) {
         return Obj(dict);
     }
 
-    // =========================================================
-    // 3. INDEX ACCESS (Tetap Sama)
-    // =========================================================
+    // ================
+    // 3. INDEX ACCESS 
+    // ================
     if (auto idx = dynamic_cast<IndexExpr*>(expr)) {
         Obj object = evaluateExpr(idx->object.get());
         Obj index = evaluateExpr(idx->index.get());
@@ -1090,9 +1232,9 @@ Obj Runtime::evaluateExpr(Expr* expr) {
         return Obj();
     }
 
-    // =========================================================
-    // 4. OOP LOGIC (Copy paste your previous OOP logic here)
-    // =========================================================
+    // ============
+    // 4. OOP LOGIC 
+    // ============
     if (auto newExpr = dynamic_cast<NewExpr*>(expr)) {
         Obj classObj = currentEnv->get(newExpr->className);
         if (!std::holds_alternative<std::shared_ptr<LinkClass>>(classObj.as)) return Obj();
@@ -1122,6 +1264,13 @@ Obj Runtime::evaluateExpr(Expr* expr) {
     
     if (dynamic_cast<ThisExpr*>(expr)) return currentEnv->get("this");
     
+    if (auto lam = dynamic_cast<LambdaExpr*>(expr)) {
+        auto linkFunc = std::make_shared<LinkFunction>();
+        linkFunc->declaration = lam->anonFunc.get();
+        linkFunc->closure = currentEnv; 
+        return Obj(linkFunc);
+    }
+
     if (auto get = dynamic_cast<GetExpr*>(expr)) {
         Obj obj = evaluateExpr(get->object.get());
         // 1. Check if it is an OOP instance
@@ -1235,6 +1384,32 @@ Obj Runtime::evaluateExpr(Expr* expr) {
             Obj left = evaluateExpr(bin->lhs.get());   
             Obj right = evaluateExpr(bin->rhs.get());  
             
+            if (std::holds_alternative<std::shared_ptr<LinkInstance>>(left.as)) {
+                auto instance = std::get<std::shared_ptr<LinkInstance>>(left.as);
+                std::string magicName = "";
+                if (bin->op == '+') magicName = "__add__";
+                else if (bin->op == '-') magicName = "__sub__";
+                else if (bin->op == '*') magicName = "__mul__";
+                else if (bin->op == '/') magicName = "__div__";
+                else if (bin->op == '=') magicName = "__eq__";
+
+                if (!magicName.empty()) {
+                    FuncDecl* method = findMethod(instance->klass.get(), magicName);
+                    if (method) {
+                        auto prevEnv = currentEnv;
+                        currentEnv = std::make_shared<Environment>(globalEnv);
+                        currentEnv->define("this", left); 
+                        if (method->params.size() > 0) currentEnv->define(method->params[0], right); 
+                        
+                        try { for (auto& s : method->body) runStatement(s.get()); } 
+                        catch (const ReturnException& e) { currentEnv = prevEnv; return e.value; }
+                        
+                        currentEnv = prevEnv;
+                        return Obj(); 
+                    }
+                }
+            }
+
             if (std::holds_alternative<int>(left.as) && std::holds_alternative<int>(right.as)) {
                 int l = std::get<int>(left.as);
                 int r = std::get<int>(right.as);
@@ -1442,13 +1617,43 @@ void Runtime::runStatement(Stmt* stmt) {
         currentEnv->define(func->name, Obj(linkFunc)); 
         return;
     }
+
     if (auto cls = dynamic_cast<ClassDecl*>(stmt)) {
         auto klass = std::make_shared<LinkClass>();
         klass->name = cls->name;
+ 
+        if (!cls->superclass.empty()) {
+            Obj superObj = currentEnv->get(cls->superclass);
+            if (std::holds_alternative<std::shared_ptr<LinkClass>>(superObj.as)) {
+                klass->superclass = std::get<std::shared_ptr<LinkClass>>(superObj.as);
+            } else {
+                std::cout << "Runtime Error: Superclass '" << cls->superclass << "' not found.\n";
+            }
+        }
+
         for (auto& method : cls->methods) klass->methods[method->name] = method.get();
         currentEnv->define(cls->name, Obj(klass));
         return;
     }
+
+    if (auto matchStmt = dynamic_cast<MatchStmt*>(stmt)) {
+        Obj matchVal = evaluateExpr(matchStmt->value.get());
+        
+        for (auto& c : matchStmt->cases) {
+            if (c.pattern == nullptr) { 
+                for (auto& s : c.body) runStatement(s.get());
+                break;
+            }
+            
+            Obj patVal = evaluateExpr(c.pattern.get());
+            if (isEqualObj(matchVal, patVal)) {
+                for (auto& s : c.body) runStatement(s.get());
+                break; 
+            }
+        }
+        return;
+    }
+
     if (dynamic_cast<ClearStmt*>(stmt)) {
         #ifdef _WIN32 
         system("cls"); 

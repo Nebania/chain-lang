@@ -1,0 +1,17 @@
+print("\n === Star Triangle (Nested Loop) ===") 
+
+set rows = 5 
+
+# Down Looping 
+for i in range(rows) { 
+    set current_row = "" 
+    set cols = i + 1
+    
+    # Right Looping
+    for j in range(cols) { 
+        set current_row = current_row + "* " 
+    } 
+
+    # Print the result 
+    print(current_row) 
+} 

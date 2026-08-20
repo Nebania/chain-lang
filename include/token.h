@@ -4,8 +4,8 @@
 enum class TokenType {
     // Keywords
     APP, WINDOW, FUNC, EXPOSE, CONNECT, PACKAGE, SH, FOR, IN, SET, 
-    WHILE, IF, ELIF, ELSE, IMPORT, RETURN, TRY, CATCH, 
-    TRUE, FALSE, CLEAR, CLS, AND, OR, BREAK, CONTINUE, 
+    WHILE, IF, ELIF, ELSE, IMPORT, RETURN, TRY, CATCH, MATCH,  
+    TRUE, FALSE, CLEAR, CLS, AND, OR, BREAK, CONTINUE,
     
     CLASS, INIT, NEW, THIS, EXTERN, // WRAPPER 
     
@@ -24,7 +24,7 @@ enum class TokenType {
     
     // Symbols
     LBRACE, RBRACE, LPAREN, RPAREN, LBRACKET, RBRACKET,
-    ARROW, DOT, PLUS, MINUS, STAR, SLASH, 
+    ARROW, DOT, PLUS, MINUS, STAR, SLASH, FAT_ARROW, 
     
     // Comparison & Assignment
     BANG, BANG_EQ,

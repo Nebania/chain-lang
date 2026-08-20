@@ -1,0 +1,12 @@
+#=============================================
+#1.Loads the file and checks if the name is in
+#the guest list
+#=============================================
+
+xml_LoadFile("list.xml")
+set name = input("What's Your Name? ")
+if xml_exists("List.name",name) {
+    print("Congrats,you are on the list :)")
+}else{
+    print("you're not invited :(")
+}

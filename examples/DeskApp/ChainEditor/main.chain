@@ -1,0 +1,186 @@
+# main.chain
+import "highlighter.chain"
+import "ui.chain"
+
+print("Memulai Chain-Editor...")
+gui_setup(1000, 700, "Chain-Editor IDE")
+gui_load_font("hack.ttf", 140)
+
+# ==========================================
+# STATE EDITOR (Data & Posisi)
+# ==========================================
+set lines = ["print(\"Hello World\")", "set x = 10", "if x > 5 {", "    print(x)", "}"]
+set cursorY = 0 # Baris (Y)
+set cursorX = 0 # Kolom (X)
+set blinkTimer = 0.0
+
+# Konstanta Layout
+set TOP_MARGIN = 40
+set LEFT_MARGIN = 60
+set LINE_HEIGHT = 22
+set FONT_SIZE = 18
+
+# Helper untuk mengukur lebar string sebagian (untuk kursor X)
+func getCursorPixelX(text, colIndex, fontSize) {
+    if colIndex == 0 { return LEFT_MARGIN }
+    # Ambil substring dari awal sampai posisi kursor
+    set sub = str.substr(text, 0, colIndex)
+    set w = gui_measure_text(sub, fontSize)
+    return LEFT_MARGIN + w
+}
+
+while gui_running() {
+    gui_start()
+    gui_clear("black")
+    
+    set screenW = gui.width()
+    set screenH = gui.height()
+
+    # ==========================================
+    # 1. LOGIKA INPUT (MENGETIK & NAVIGASI)
+    # ==========================================
+    
+    # A. Mengetik Huruf Biasa
+    set charCode = gui_get_char()
+    while charCode > 0 {
+        set huruf = char(charCode)
+        set currentLine = lines[cursorY]
+        
+        # Sisipkan huruf di posisi cursorX
+        set leftPart = str.substr(currentLine, 0, cursorX)
+        set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
+        
+        set lines[cursorY] = leftPart + huruf + rightPart
+        set cursorX = cursorX + 1
+        
+        # Ambil huruf selanjutnya (jika ngetik cepat)
+        set charCode = gui_get_char()
+    }
+
+    # B. Tombol BACKSPACE
+    if gui_is_key_pressed("BACKSPACE") {
+        set currentLine = lines[cursorY]
+        
+        if cursorX > 0 {
+            # Hapus 1 huruf sebelum kursor
+            set leftPart = str.substr(currentLine, 0, cursorX - 1)
+            set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
+            set lines[cursorY] = leftPart + rightPart
+            set cursorX = cursorX - 1
+        } else {
+            # Jika di ujung kiri, gabungkan dengan baris atasnya
+            if cursorY > 0 {
+                set prevLine = lines[cursorY - 1]
+                set newCursorX = len(prevLine)
+                
+                # Gabungkan baris ini ke baris atas
+                set lines[cursorY - 1] = prevLine + currentLine
+                list.remove(lines, cursorY)
+                
+                set cursorY = cursorY - 1
+                set cursorX = newCursorX
+            }
+        }
+    }
+
+    # C. Tombol ENTER
+    if gui_is_key_pressed("ENTER") {
+        set currentLine = lines[cursorY]
+        
+        # Pecah baris menjadi dua bagian
+        set leftPart = str.substr(currentLine, 0, cursorX)
+        set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
+        
+        set lines[cursorY] = leftPart
+        set cursorY = cursorY + 1
+        set cursorX = 0
+        
+        list.insert(lines, cursorY, rightPart)
+    }
+
+    # D. Navigasi Kursor (Panah Kiri, Kanan, Atas, Bawah)
+    if gui_is_key_pressed("LEFT") {
+        if cursorX > 0 { set cursorX = cursorX - 1 }
+        elif cursorY > 0 {
+            set cursorY = cursorY - 1
+            set cursorX = len(lines[cursorY])
+        }
+    }
+    if gui_is_key_pressed("RIGHT") {
+        if cursorX < len(lines[cursorY]) { set cursorX = cursorX + 1 }
+        elif cursorY < len(lines) - 1 {
+            set cursorY = cursorY + 1
+            set cursorX = 0
+        }
+    }
+    if gui_is_key_pressed("UP") {
+        if cursorY > 0 {
+            set cursorY = cursorY - 1
+            # Jaga agar kursor X tidak melebihi panjang baris atas
+            if cursorX > len(lines[cursorY]) { set cursorX = len(lines[cursorY]) }
+        }
+    }
+    if gui_is_key_pressed("DOWN") {
+        if cursorY < len(lines) - 1 {
+            set cursorY = cursorY + 1
+            # Jaga agar kursor X tidak melebihi panjang baris bawah
+            if cursorX > len(lines[cursorY]) { set cursorX = len(lines[cursorY]) }
+        }
+    }
+
+    # ==========================================
+    # 2. RENDER AREA KODE (Di-clip)
+    # ==========================================
+    gui_begin_clip(LEFT_MARGIN, TOP_MARGIN, screenW - LEFT_MARGIN, screenH - TOP_MARGIN - 25)
+    
+    for i in range(len(lines)) {
+        set posY = TOP_MARGIN + (i * LINE_HEIGHT)
+        
+        # Gambar Teks dengan SYNTAX HIGHLIGHTING
+        drawHighlightedLine(LEFT_MARGIN, posY, lines[i], FONT_SIZE)
+        
+        # Gambar Kursor (Blink)
+        if i == cursorY {
+            # Gunakan fungsi math.sin() yang dikalikan waktu untuk membuat gelombang naik turun
+            set blinkValue = math.sin(gui_get_time() * 5.0)
+            
+            # Jika gelombang bernilai positif, tampilkan kursor
+            if blinkValue > 0.0 {
+                set px = getCursorPixelX(lines[i], cursorX, FONT_SIZE)
+                gui_rect(px, posY, 2, LINE_HEIGHT, "white")
+            }
+        }
+    }
+    gui_end_clip()
+
+    # Gambar Nomor Baris (Di luar clip agar tidak terpotong)
+    for i in range(len(lines)) {
+        set posY = TOP_MARGIN + (i * LINE_HEIGHT)
+        gui_text(LEFT_MARGIN - 40, posY, i + 1, "gray", 15)
+    }
+
+    # ==========================================
+    # 3. RENDER UI (Dari ui.chain)
+    # ==========================================
+    drawTopMenu(screenW)
+    drawSidebar(screenH)
+    drawStatusBar(screenW, screenH, cursorY + 1, cursorX + 1)
+
+    # ==========================================
+    # 4. LOGIKA COMPILE & RUN (F5)
+    # ==========================================
+    # Tekan 'R' untuk menjalankan kode yang ada di layar!
+    if gui_is_key_pressed("R") {
+        print("Menyimpan dan Menjalankan kode...")
+        set codeText = str.merge(lines, "\n")
+        io.write("temp_run.chain", codeText)
+        
+        set output = os.exec("./chainlang temp_run.chain")
+        print("--- OUTPUT PROGRAM ---")
+        print(output)
+    }
+
+    gui_present()
+}
+
+gui_close()

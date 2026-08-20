@@ -44,23 +44,16 @@ print(helloCREL)
 ```
 #### 2.Compile it using G++
 ```bash
-    #Windows
     g++ -shared -o hello.dll helloCREL.cpp
-    #POSIX
-    g++ -shared -fPIC -o libhello.so crelHello.cpp
 ```
 #### Execute it with chainlang
 
 ```bash
-#Windows
 chainlang crel.chain --crel ./hello.dll
-#POSIX
-chainlang crel.chain --crel ./libhello.so
 ```
 
 output:
 ```
-#same on both Windos and POSIX
 [CREL] Loading: ./hello.dll
 [CREL] Loaded successfully: ./hello.dll
 Hello from CREL!

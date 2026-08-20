@@ -2,17 +2,17 @@
 #include <iostream>
 
 void printVersion() {
-    std::cout << "Chain Version 0.6.0 (Full Release) \n" << std::endl;
+    std::cout << "Chain Version 0.6.1-beta (Beta Release) \n" << std::endl;
 } 
 
 void printHelp() {
     std::cout << R"(
 ========================================================
-           NEBANIA CHAIN v0.6.0 (Full Release) HELP
+           NEBANIA CHAIN v0.6.1-beta (Beta Release) HELP
 ========================================================
 History:
 Created by   : Pilot0253
-Developed by : logoro17 
+Developed by : LoGoRo17 && Tohar777 
 Our Website  : https://nebania.site
 (Nebania welcomes you to join our Discord community: https://discord.gg/C6S6kn7dNz)
 
@@ -24,7 +24,6 @@ USAGE:
   chain/chainlang --time <file>    : Execute and measure execution time (Profiler).
   chain/chainlang --help           : Show this manual.
   chain/chainlang --version        : Show current version.
-  chain/chainlang --crel <file>    : Loads CREL library
 
 DATA TYPES:
   Integer  : 10, 25, -5

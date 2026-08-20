@@ -1,0 +1,14 @@
+set status = 404
+
+match status {
+    200 => {
+        print("Status is OK")
+    }
+    404 => {
+        print("Error: Not Found")
+        print("Please check URL")
+    }
+    _ => {
+        print("Unknown Status")
+    }
+}

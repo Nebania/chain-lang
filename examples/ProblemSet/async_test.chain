@@ -1,0 +1,31 @@
+# 1. Network Function ( Will run in background thread )
+func runServer() {
+    print("[Server] Memulai server di port 8080...")
+    set sock = net.server(8080)
+    
+    while true {
+        # net.accept will block until a client connects
+        set client = net.accept(sock)
+        print("[Server] a Client Connected!")
+        net.send(client, "Holla from ChainLang Server!\n")
+        net.close(client)
+    }
+}
+
+# 2. Server Run on seperate thread
+thread.spawn(runServer)
+
+// 3. GUI run on main thread
+# Change // to # , fixing the problem :D
+gui_setup(400, 300, "ChainLang Async Test")
+
+while gui_running() {
+    gui_start()
+    gui_clear("white")
+    gui_text(50, 100, "GUI Work Successfully!", "blue", 20)
+    gui_text(50, 140, "Server running in background.", "gray", 15)
+    
+    gui_present()
+}
+
+gui_close()

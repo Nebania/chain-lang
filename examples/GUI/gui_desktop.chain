@@ -1,7 +1,7 @@
 print("Booting Nebula Desktop Environment v1.0 (Final)...")
 
 # Setup Window (Resizable)
-gui_setup(1024, 768, "Nebula Desktop v1.0")
+gui_setup(640, 480, "Nebula Desktop v1.0")
 
 # Load Assets
 gui_load_font("hack.ttf", 32)
@@ -78,7 +78,7 @@ while gui_running() {
             gui_rect(menu_x, term_y, menu_w, 25, "blue") # Highlight
             if gui_click() {
                 print("Opening Terminal...")
-                os.exec("../../link examples/GUI/gui_terminal.chain")
+                os.exec("../../chainlang gui_terminal.chain")
                 set show_menu = false
             }
         }

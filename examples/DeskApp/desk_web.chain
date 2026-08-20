@@ -1,0 +1,60 @@
+print("=========================================")
+print("Starting ChainLang Native Desktop App...")
+print("=========================================")
+
+set ui = "
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>ChainLang App</title>
+    <style>
+        body { background-color: #1e1e2e; color: #cdd6f4; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background-color: #181825; padding: 40px; border-radius: 12px; text-align: center; width: 80%; max-width: 400px; }
+        h1 { color: #89b4fa; margin-top: 0; }
+        input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #45475a; background: #313244; color: white; margin-bottom: 20px; box-sizing: border-box; }
+        button { background-color: #89b4fa; color: #11111b; font-weight: bold; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; }
+        button:hover { background-color: #b4befe; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>ChainLang Desktop</h1>
+        <p>Rendered using Native OS WebKit.</p>
+        
+        <input type='text' id='messageInput' placeholder='Type a message...'>
+        <button onclick='sendData()'>Send to Backend</button>
+    </div>
+
+    <script>
+        function sendData() {
+            // Use double-slashes for JS comments. This is safe inside a ChainLang string!
+            let message = document.getElementById('messageInput').value;
+            
+            if (message.trim() === '') {
+                alert('Text cannot be empty!');
+                return;
+            }
+
+            // Call the C++ function
+            chain_print('Data received from UI: ' + message);
+            document.getElementById('messageInput').value = '';
+        }
+    </script>
+</body>
+</html>
+"
+
+# Show GUI
+webview.show("ChainLang Native Application", 800, 600, ui)
+
+print("=========================================")
+print("Webview is running in the background (Linux Mode).")
+print("Press Ctrl+C in this terminal to exit the program.")
+
+# HOLD THE PROGRAM TO PREVENT EARLY EXIT
+# This is required for some Linux distros where WebKit2GTK runs Asynchronously
+# while true {
+#    time.sleep(100)
+# }

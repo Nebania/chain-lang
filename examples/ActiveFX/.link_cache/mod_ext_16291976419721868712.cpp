@@ -1,0 +1,86 @@
+#include <iostream>
+#include <string>
+#define print(x) std::cout << (x) << std::endl;
+#define LINK_rect_x (((int*)link_shm)[0])
+#define LINK_rect_y (((int*)link_shm)[1])
+#define LINK_rect_w (((int*)link_shm)[2])
+#define LINK_rect_h (((int*)link_shm)[3])
+    #include <SDL2/SDL.h>
+
+extern "C" void link_entry(void* link_shm) {
+
+
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* win = SDL_CreateWindow("Nebula Procedural Character", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+
+    bool running = true;
+    SDL_Event e;
+
+    while(running) {
+        while(SDL_PollEvent(&e)) {
+            if(e.type == SDL_QUIT) running = false;
+            
+            // Kontrol Pergerakan (Ditambah Atas/Bawah)
+            if(e.type == SDL_KEYDOWN) {
+                if(e.key.keysym.sym == SDLK_RIGHT) LINK_rect_x += 15;
+                if(e.key.keysym.sym == SDLK_LEFT)  LINK_rect_x -= 15;
+                if(e.key.keysym.sym == SDLK_UP)    LINK_rect_y -= 15;
+                if(e.key.keysym.sym == SDLK_DOWN)  LINK_rect_y += 15;
+            }
+        }
+
+        // Latar Belakang Hitam
+        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+        SDL_RenderClear(renderer);
+
+        // ==========================================
+        // MENGGAMBAR KARAKTER (PROSEDURAL)
+        // Base anchor: bx, by
+        // ==========================================
+        float bx = (float)LINK_rect_x;
+        float by = (float)LINK_rect_y;
+
+        // 1. KEPALA (Monitor Luar - Biru Tua)
+        SDL_SetRenderDrawColor(renderer, 60, 130, 220, 255);
+        SDL_FRect head = { bx, by, 100, 70 };
+        SDL_RenderFillRectF(renderer, &head);
+
+        // 2. LAYAR (Monitor Dalam - Biru Terang/Cyan)
+        SDL_SetRenderDrawColor(renderer, 150, 220, 255, 255);
+        SDL_FRect screen = { bx + 10, by + 10, 80, 50 };
+        SDL_RenderFillRectF(renderer, &screen);
+
+        // 3. LEHER (Biru Tua)
+        SDL_SetRenderDrawColor(renderer, 60, 130, 220, 255);
+        SDL_FRect neck = { bx + 40, by + 70, 20, 15 };
+        SDL_RenderFillRectF(renderer, &neck);
+
+        // 4. SAYAP / TANGAN KIRI & KANAN (Biru Medium)
+        SDL_SetRenderDrawColor(renderer, 80, 160, 240, 255);
+        SDL_FRect l_wing = { bx - 25, by + 85, 45, 15 };
+        SDL_RenderFillRectF(renderer, &l_wing);
+        SDL_FRect r_wing = { bx + 80, by + 85, 45, 15 };
+        SDL_RenderFillRectF(renderer, &r_wing);
+
+        // 5. BADAN BAWAH / EKOR (Berundak membentuk segitiga)
+        SDL_SetRenderDrawColor(renderer, 60, 130, 220, 255);
+        SDL_FRect body1 = { bx + 30, by + 85, 40, 20 };
+        SDL_RenderFillRectF(renderer, &body1);
+        
+        SDL_FRect body2 = { bx + 35, by + 105, 30, 20 };
+        SDL_RenderFillRectF(renderer, &body2);
+        
+        SDL_FRect body3 = { bx + 45, by + 125, 10, 20 };
+        SDL_RenderFillRectF(renderer, &body3);
+        // ==========================================
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16); // ~60 FPS
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+
+}

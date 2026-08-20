@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <style>
+        body { background-color: #1e1e2e; color: #cdd6f4; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background-color: #181825; padding: 40px; border-radius: 12px; text-align: center; width: 80%; max-width: 400px; }
+        h1 { color: #89b4fa; margin-top: 0; }
+        input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #45475a; background: #313244; color: white; margin-bottom: 20px; box-sizing: border-box; }
+        button { background-color: #89b4fa; color: #11111b; font-weight: bold; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; }
+        button:hover { background-color: #b4befe; }
+        #status { margin-top: 20px; color: #a6e3a1; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>ChainLang Desktop</h1>
+        <input type='text' id='messageInput' placeholder='Type a message...'>
+        <button onclick='sendData()'>Send to Backend</button>
+        
+        <!-- Area to receive reply from ChainLang -->
+        <div id='status'></div>
+    </div>
+
+    <script>
+        function sendData() {
+            let message = document.getElementById('messageInput').value;
+            if (message.trim() === '') return;
+            
+            // Send to C++
+            chain_print(message);
+            
+            document.getElementById('messageInput').value = '';
+            document.getElementById('status').innerText = 'Sending...';
+        }
+
+        // This function will be called by ChainLang from the Backend!
+        function updateStatus(reply) {
+            document.getElementById('status').innerText = reply;
+        }
+    </script>
+</body>
+</html>

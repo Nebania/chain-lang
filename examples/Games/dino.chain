@@ -7,6 +7,7 @@ gui_setup(800, 400, "Chain Dino Game")
 # GAME VARIABLES
 # ==========================================
 # Game states: "INTRO", "COUNTDOWN", "PLAYING", "GAMEOVER"
+
 set state = "INTRO"
 set start_time = 0
 set countdown = 5

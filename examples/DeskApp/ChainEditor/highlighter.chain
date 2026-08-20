@@ -1,0 +1,40 @@
+# highlighter.chain
+
+func getKeywordColor(word) {
+    # Bersihkan spasi
+    set w = str.trim(word)
+    
+    # Keywords Utama (Biru/Ungu)
+    if w == "func" or w == "class" or w == "set" or w == "import" { return "cyan" }
+    if w == "if" or w == "else" or w == "while" or w == "for" or w == "return" { return "magenta" }
+    
+    # Tipe Data & Boolean (Kuning/Oranye)
+    if w == "true" or w == "false" or w == "null" { return "yellow" }
+    
+    # Fungsi Bawaan (Hijau)
+    if w == "print" or str.contains(w, "math.") or str.contains(w, "gui_") { return "green" }
+    
+    # Default Text (Putih)
+    return "white"
+}
+
+# Fungsi untuk menggambar 1 baris teks dengan warna-warni
+func drawHighlightedLine(x, y, text, fontSize) {
+    set words = str.split(text, " ")
+    set currentX = x
+    
+    for i in range(len(words)) {
+        set word = words[i]
+        set color = getKeywordColor(word)
+        
+        # Cek apakah ini string (Kutipan)
+        if str.contains(word, "\"") { set color = "yellow" }
+        
+        # Gambar kata tersebut
+        gui_text(currentX, y, word, color, fontSize)
+        
+        # Geser X untuk kata berikutnya (+ spasi)
+        set wordWidth = gui_measure_text(word + " ", fontSize)
+        set currentX = currentX + wordWidth
+    }
+}

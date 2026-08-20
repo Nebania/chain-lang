@@ -1,0 +1,19 @@
+# Pattern Matching Example in Object-Oriented Programming 
+
+class Character {
+    func init(name: String, hp: Int) {
+        set this.name = name
+        set this.hp = hp
+    }
+
+    func checkStatus() {
+        match this.hp {
+            0 => print(this.name + " Defeated! ")
+            100 => print(this.name + " Healthy! ")
+            _ => print(this.name + " HP: " + this.hp)
+        }
+    }
+}
+
+set hero = new Character("Alpha", 100)
+hero.checkStatus()

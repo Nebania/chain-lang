@@ -24,6 +24,7 @@ private:
     std::unique_ptr<WindowDecl> parseWindow();
     std::unique_ptr<FuncDecl> parseFunc();
     
+    std::unique_ptr<Stmt> parseMatch();
     std::unique_ptr<Stmt> parseClass();
     std::unique_ptr<Stmt> parseFor(); 
     std::unique_ptr<Stmt> parseTry();

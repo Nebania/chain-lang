@@ -148,7 +148,10 @@ struct SetStmt : public Stmt {
     SetStmt(const std::string& n, std::unique_ptr<Expr> e) : name(n), expression(std::move(e)) {}
     void print(int indent = 0) override {
         std::cout << std::string(indent, ' ') << "Set: " << name << " = ";
-        if(expression) expression->print(); std::cout << "\n";
+        if(expression) {
+            expression->print(); 
+        }
+        std::cout << "\n";
     }
 };
 
@@ -204,6 +207,9 @@ struct ForStmt : public Stmt {
 struct FuncDecl : public Stmt {
     std::string name;
     std::vector<std::string> params;
+    std::vector<std::string> paramTypes; 
+    std::string returnType;
+
     std::vector<std::unique_ptr<Stmt>> body;
     FuncDecl(const std::string& n, std::vector<std::string> p) : name(n), params(std::move(p)) {}
     void print(int indent = 0) override {
@@ -215,14 +221,41 @@ struct FuncDecl : public Stmt {
  
 struct ClassDecl : public Stmt {
     std::string name;
+    std::string superclass;
     std::vector<std::unique_ptr<FuncDecl>> methods;  
 
-    ClassDecl(std::string n, std::vector<std::unique_ptr<FuncDecl>> m) 
-    : name(n), methods(std::move(m)) {}
+    ClassDecl(std::string n, std::string super, std::vector<std::unique_ptr<FuncDecl>> m) 
+    : name(n), superclass(super), methods(std::move(m)) {}
 
     void print(int indent = 0) override {
-        std::cout << std::string(indent, ' ') << "Class " << name << "\n";
+        std::cout << std::string(indent, ' ') << "Class " << name 
+                  << (superclass.empty() ? "" : " : " + superclass) << "\n";
         for (auto& m : methods) m->print(indent + 2);
+    }
+};
+
+struct LambdaExpr : public Expr {
+    std::unique_ptr<FuncDecl> anonFunc; 
+    LambdaExpr(std::unique_ptr<FuncDecl> f) : anonFunc(std::move(f)) {}
+    void print() const override { 
+        std::cout << "func(...) {...}"; 
+    }
+};
+
+struct MatchCase {
+    std::unique_ptr<Expr> pattern; 
+    std::vector<std::unique_ptr<Stmt>> body; 
+}; 
+
+struct MatchStmt : public Stmt {
+    std::unique_ptr<Expr> value;
+    std::vector<MatchCase> cases;
+    
+    MatchStmt(std::unique_ptr<Expr> v, std::vector<MatchCase> c) 
+    : value(std::move(v)), cases(std::move(c)) {}
+    
+    void print(int indent = 0) override {
+        std::cout << std::string(indent, ' ') << "Match\n";
     }
 };
 
@@ -246,7 +279,7 @@ struct PropertyStmt : public Stmt {
     std::string name;
     std::string value;
     PropertyStmt(const std::string& n, const std::string& v) : name(n), value(v) {}
-    void print(int indent = 0) override { std::cout << "Prop " << name << "\n"; }
+    void print(int /*indent*/ = 0) override { std::cout << "Prop " << name << "\n"; }
 };
 
 struct AppDecl : public Stmt {
@@ -266,7 +299,7 @@ struct WindowDecl : public Stmt {
 struct ConnectStmt : public Stmt {
     std::string source, event, target;
     ConnectStmt(const std::string& s, const std::string& e, const std::string& t) : source(s), event(e), target(t) {}
-    void print(int indent = 0) override { std::cout << "Connect\n"; }
+    void print(int /*indent*/ = 0) override { std::cout << "Connect\n"; }
 };
 
 struct ReturnStmt : public Stmt {

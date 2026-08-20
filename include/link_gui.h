@@ -22,6 +22,9 @@ namespace SysGui {
     void stop(); 
     void present();
     void clear(const std::string& colorName);
+
+    void beginScissor(int x, int y, int w, int h);
+    void endScissor();
     
     // Resources
     void loadFont(const std::string& path, int fontSize);
@@ -29,6 +32,7 @@ namespace SysGui {
     
     // Drawing
     void drawRect(int x, int y, int w, int h, const std::string& color);
+    void drawLine(int x1, int y1, int x2, int y2, int thick, const std::string& color);
     void drawText(int x, int y, const std::string& text, const std::string& color, int size);
     void drawImage(const std::string& name, int x, int y, int width, int height);
 

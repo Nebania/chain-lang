@@ -1,0 +1,36 @@
+print("=== [STEP 1] STARTING SCRIPT ===")
+
+# Class Definition
+print("=== [STEP 2] DEFINING CLASS ROBOT ===")
+class Robot {
+    # Constructor
+    func init(n, e) {
+        print("   >> [DEBUG] Inside init() for: " + n)
+        set this.name = n
+        set this.energy = e
+        print("   >> [DEBUG] Object properties set.")
+    }
+
+    # Method
+    func walk() {
+        print("   >> [DEBUG] Inside walk() method")
+        if (this.energy > 0) {
+            set this.energy = this.energy - 10
+            print("   >> [LOG] " + this.name + " is walking... Energy: " + this.energy)
+        } else {
+            print("   >> [LOG] " + this.name + " cannot move! Low Battery.")
+        }
+    }
+}
+print("=== [STEP 3] CLASS DEFINED SUCCESSFULLY ===")
+
+# Object Instantiation
+print("=== [STEP 4] CREATING OBJECT R1 ===")
+set r1 = new Robot("Optimus", 100)
+print("=== [STEP 5] R1 CREATED ===")
+
+# Call Method
+print("=== [STEP 6] CALLING R1.WALK() ===")
+r1.walk()
+
+print("=== [STEP 7] SCRIPT FINISHED ===")

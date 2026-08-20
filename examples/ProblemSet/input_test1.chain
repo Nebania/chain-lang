@@ -1,0 +1,12 @@
+# Age Calculator
+set year_now = 2025
+set year_born = input("Insert your born year: ")
+
+set age = year_now - year_born
+
+print(age)
+
+if age > 17
+    print(1) # Mature
+else
+    print(0) # Loli

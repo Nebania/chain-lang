@@ -33,6 +33,10 @@ struct Value {
     ValVariant as;
 
     Value() : as(std::monostate{}) {}
+    Value(const Value& other) = default;
+    Value(Value&& other) = default;
+    Value& operator=(const Value& other) = default;
+    Value& operator=(Value&& other) = default;
     Value(int v) : as(v) {}
     Value(double v) : as(v) {}
     Value(std::string v) : as(v) {}
@@ -49,6 +53,7 @@ struct Value {
 using Obj = Value;
 struct LinkClass {
     std::string name;
+    std::shared_ptr<LinkClass> superclass;
     std::unordered_map<std::string, Stmt*> methods; 
 };
 struct LinkInstance {
@@ -106,4 +111,16 @@ struct ContinueException {};
 struct RuntimeException {
     std::string message;
     RuntimeException(std::string msg) : message(msg) {}
+};
+
+struct ChainError : public std::exception {
+    int line;
+    int col;
+    std::string message;
+    
+    ChainError(int l, int c, std::string msg) : line(l), col(c), message(msg) {}
+    
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
 };

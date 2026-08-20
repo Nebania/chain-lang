@@ -1,0 +1,154 @@
+print("========================================")
+print("Processing TSP Visualization...")
+
+# ==========================================
+# 1. HELPER & ALGORITHM BUILDING BLOCKS
+# ==========================================
+func calculateDistance(c1, c2) {
+    set dx = c1.x - c2.x
+    set dy = c1.y - c2.y
+    return math.sqrt((dx * dx) + (dy * dy))
+}
+
+func parseXMLCities(filepath) {
+    set rawText = io.read(filepath)
+    set blocks = str.split(rawText, "<city")
+    set cityList = []
+
+    for i in range(len(blocks)) {
+        if i == 0 { continue } 
+        set block = blocks[i]
+        set parts = str.split(block, "/>")
+        set cleanLine = parts[0]
+        set cleanLine = str.replace(cleanLine, "'", "")
+        set cleanLine = str.replace(cleanLine, "\"", "")
+        
+        set attrs = str.split(cleanLine, " ")
+        set node = {}
+
+        for j in range(len(attrs)) {
+            set kv = str.split(attrs[j], "=")
+            if len(kv) == 2 {
+                set key = str.trim(kv[0])
+                set val = str.trim(kv[1])
+                if key == "id" { set node.id = val }
+                elif key == "x" { set node.x = float(val) }
+                elif key == "y" { set node.y = float(val) }
+            }
+        }
+        if dict.has(node, "id") { list.add(cityList, node) }
+    }
+    return cityList
+}
+
+func solveTSP(nodes) {
+    set unvisited = []
+    for i in range(len(nodes)) { list.add(unvisited, nodes[i]) }
+    
+    set current = unvisited[0]
+    list.remove(unvisited, 0)
+    
+    set tour = [current.id]
+    set totalDistance = 0.0
+
+    while len(unvisited) > 0 {
+        set nearestIdx = -1
+        set minDist = 999999.0
+        
+        for i in range(len(unvisited)) {
+            set target = unvisited[i]
+            set dist = calculateDistance(current, target)
+            if dist < minDist {
+                set minDist = dist
+                set nearestIdx = i
+            }
+        }
+        set current = unvisited[nearestIdx]
+        set totalDistance = totalDistance + minDist
+        list.add(tour, current.id)
+        list.remove(unvisited, nearestIdx)
+    }
+
+    set startNode = nodes[0]
+    set totalDistance = totalDistance + calculateDistance(current, startNode)
+    list.add(tour, startNode.id)
+
+    return { "path": tour, "distance": totalDistance }
+}
+
+# Coordinate retrieval function by city ID
+func getCityById(cities, id) {
+    for i in range(len(cities)) {
+        if cities[i].id == id {
+            return cities[i]
+        }
+    }
+    return {}
+}
+
+# =================== 
+# 2. DATA PROCESSING  
+# ===================
+set cities = parseXMLCities("cities.xml")
+set result = solveTSP(cities)
+
+print("Finished: " + str(math.round(result.distance)) + " units.")
+print("Opening GUI...")
+
+# ===================
+# 3. VISUALISASI GUI
+# ===================
+gui_setup(640, 480, "ChainLang - TSP Visualizer")
+gui_load_font("hack.ttf", 32)
+
+
+# Constants for scaling and offsetting city coordinates
+set SCALE = 3
+set OFFSET_X = 150
+set OFFSET_Y = 120
+
+while gui_running() {
+    gui_start()
+    gui_clear("white")
+
+    # A. DRAWING PATH (Edges)
+    for i in range(len(result.path) - 1) {
+        set id1 = result.path[i]
+        set id2 = result.path[i + 1]
+        
+        set city1 = getCityById(cities, id1)
+        set city2 = getCityById(cities, id2)
+        
+        # Calculate pixel positions based on scaling and offset
+        set px1 = (city1.x * SCALE) + OFFSET_X
+        set py1 = (city1.y * SCALE) + OFFSET_Y
+        set px2 = (city2.x * SCALE) + OFFSET_X
+        set py2 = (city2.y * SCALE) + OFFSET_Y
+        
+        # Draw line between the two cities
+        gui_line(px1, py1, px2, py2, 2, "blue")
+    }
+
+    # B. DRAWING CITY POINTS (Nodes)
+    for i in range(len(cities)) {
+        set c = cities[i]
+        set px = (c.x * SCALE) + OFFSET_X
+        set py = (c.y * SCALE) + OFFSET_Y
+        
+        # Draw a small rectangle to represent the city
+        gui_rect(px - 3, py - 3, 6, 6, "red")
+        
+        # Write the city ID next to the point
+        gui_text(px + 8, py - 8, c.id, "black", 15)
+    }
+
+    # C. Drawing Text Information
+    gui_text(20, 20, "TSP (Nearest Neighbor)", "black", 20)
+    gui_text(20, 50, "Total Cities: " + str(len(cities)), "gray", 20)
+    gui_text(20, 80, "Total Distance: " + str(math.round(result.distance)), "green", 20)
+
+    gui_present()
+}
+
+gui_close()
+print("Closing GUI.")

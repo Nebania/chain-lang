@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cities>
+    <city id="A" x="12.0" y="45.0"/>
+    <city id="B" x="85.0" y="14.0"/>
+    <city id="C" x="33.0" y="78.0"/>
+    <city id="D" x="90.0" y="62.0"/>
+    <city id="E" x="41.0" y="25.0"/>
+    <city id="F" x="67.0" y="89.0"/>
+    <city id="G" x="22.0" y="11.0"/>
+    <city id="H" x="55.0" y="34.0"/>
+    <city id="I" x="78.0" y="95.0"/>
+    <city id="J" x="10.0" y="80.0"/>
+    <city id="K" x="95.0" y="30.0"/>
+    <city id="L" x="60.0" y="15.0"/>
+    <city id="M" x="30.0" y="50.0"/>
+    <city id="N" x="72.0" y="40.0"/>
+    <city id="O" x="18.0" y="92.0"/>
+    <city id="P" x="82.0" y="75.0"/>
+    <city id="Q" x="48.0" y="68.0"/>
+    <city id="R" x="5.0"  y="35.0"/>
+    <city id="S" x="63.0" y="52.0"/>
+    <city id="T" x="38.0" y="18.0"/>
+    <city id="U" x="88.0" y="88.0"/>
+    <city id="V" x="25.0" y="33.0"/>
+    <city id="W" x="50.0" y="5.0"/>
+    <city id="X" x="99.0" y="10.0"/>
+    <city id="Y" x="15.0" y="65.0"/>
+    <city id="Z" x="70.0" y="20.0"/>
+</cities>

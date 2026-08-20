@@ -1,0 +1,24 @@
+print("=============================")
+
+# Lambdas & First-Class Function 
+print("Lambda & First-Class Function") 
+set doMath = func(x, y) { return x * y } 
+print("Output : " + doMath(5, 4))
+
+print("")
+print("=============================")
+print("")
+
+# Type Hinting (Gradual Typing) 
+print("Type Hinting (Gradual Typing)")
+func greet(name: String) -> String {
+    return "Hello " + name 
+}
+
+set result = greet("Nebania")
+print(result) 
+
+
+print("")
+print("=============================")
+print("")

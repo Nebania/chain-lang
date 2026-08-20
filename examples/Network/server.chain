@@ -1,3 +1,5 @@
+# Chained with client.chain
+
 print("=== SIMPLE CHAT SERVER ===")
 set port = 8080
 set server = net.server(port)

@@ -1,0 +1,133 @@
+print("========================================")
+print("Starting TSP Nearest Neighbor Example...")
+
+# ==========================================
+# 1. HELPER: MATH & XML PARSER  
+# ==========================================  
+
+# Math Helper 
+func calculateDistance(c1, c2) {
+    set dx = c1.x - c2.x
+    set dy = c1.y - c2.y
+    return math.sqrt((dx * dx) + (dy * dy))
+}
+
+# XML Parser 
+func parseXMLCities(filepath) {
+    set rawText = io.read(filepath)
+    
+    # Reading Tag <city ... /> from XML
+    set blocks = str.split(rawText, "<city")
+    set cityList = []
+
+    for i in range(len(blocks)) {
+        if i == 0 { continue } # Skip XML Header
+        
+        set block = blocks[i]
+
+        # Only Take text before the closing tag />
+        set parts = str.split(block, "/>")
+        set cleanLine = parts[0]
+        
+        # Cleaning Quates
+        set cleanLine = str.replace(cleanLine, "'", "")
+        set cleanLine = str.replace(cleanLine, "\"", "")
+        
+        set attrs = str.split(cleanLine, " ")
+        set node = {}
+
+        for j in range(len(attrs)) {
+            set kv = str.split(attrs[j], "=")
+            if len(kv) == 2 {
+                set key = str.trim(kv[0])
+                set val = str.trim(kv[1])
+
+                if key == "id" { set node.id = val }
+                elif key == "x" { set node.x = float(val) }
+                elif key == "y" { set node.y = float(val) }
+            }
+        }
+
+        # Only the nodes with valid IDs will be added to the cityList
+        if dict.has(node, "id") {
+            list.add(cityList, node)
+        }
+    }
+    return cityList
+}
+
+# ==========================================
+# 2. NEAREST NEIGHBOR ALGORITHM (TSP)
+# ==========================================
+func solveTSP(nodes) {
+    
+    set unvisited = []
+    for i in range(len(nodes)) {
+        list.add(unvisited, nodes[i])
+    }
+    
+    set current = unvisited[0]
+    list.remove(unvisited, 0)
+    
+    set tour = [current.id]
+    set totalDistance = 0.0
+
+    while len(unvisited) > 0 {
+        set nearestIdx = -1
+        set minDist = 999999.0
+        
+        for i in range(len(unvisited)) {
+            set target = unvisited[i]
+            set dist = calculateDistance(current, target)
+            
+            if dist < minDist {
+                set minDist = dist
+                set nearestIdx = i
+            }
+        }
+
+        set current = unvisited[nearestIdx]
+        set totalDistance = totalDistance + minDist
+        list.add(tour, current.id)
+        
+        list.remove(unvisited, nearestIdx)
+    }
+
+    set startNode = nodes[0]
+    set returnDist = calculateDistance(current, startNode)
+    set totalDistance = totalDistance + returnDist
+    list.add(tour, startNode.id)
+
+    return {
+        "path": tour,
+        "distance": totalDistance
+    }
+}
+
+# ==========================================
+# 3. PROGRAM EXECUTION 
+# ==========================================
+
+print("Read XML File...")
+set cities = parseXMLCities("cities.xml")
+
+print("Success " + len(cities) + " cities.")
+print("\n--- Starting TSP Nearest Neighbor ---")
+
+set result = solveTSP(cities)
+
+# --- OUTPUT PROCESSING --- 
+set routeString = ""
+for i in range(len(result.path)) {
+    set routeString = routeString + result.path[i]
+    if i < len(result.path) - 1 {
+        set routeString = routeString + " -> "
+    }
+}
+
+print("\nOptimal Route:")
+print(routeString)
+
+print("\nTotal Distance:")
+print(result.distance)
+print("========================================")

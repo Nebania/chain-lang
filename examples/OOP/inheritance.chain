@@ -1,0 +1,33 @@
+class Machine {
+    func init() {
+        set this.power = 10
+    }
+}
+
+class Robot : Machine {
+    func init(p) {
+        print("-> Init Robot called with value : " + str(p))
+        set this.power = p
+    }
+    
+    func __add__(other) {
+        print("-> Method __add__ called!")
+        set total = this.power + other.power
+        print("-> Total power calculated: " + str(total))
+        return new Robot(total)
+    }
+}
+
+print("=== Making R1 ===")
+set r1 = new Robot(50)
+print("Power r1: " + str(r1.power))
+
+print("=== Making R2 ===")
+set r2 = new Robot(25)
+print("Power r2: " + str(r2.power))
+
+print("=== Combining R1 + R2 ===")
+set r3 = r1 + r2 
+
+print("=== Final Result ===")
+print("Total Power Third Robot should be : " + str(r3.power))

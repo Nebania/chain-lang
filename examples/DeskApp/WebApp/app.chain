@@ -1,0 +1,19 @@
+print("=== Starting Application ===")
+
+# 1. Read UI from an external file! (Very clean)
+set ui = io.read("index.html")
+
+# 2. Create a background function to reply to UI messages
+func logicBackend() {
+    # Wait 2 seconds so the Webview has time to open
+    time.sleep(2000) 
+    
+    # Execute JavaScript from ChainLang!
+    webview.eval("updateStatus('ChainLang Backend Ready!')")
+}
+
+# Run logic in the background so it doesn't block the UI
+thread.spawn(logicBackend)
+
+# 3. Show UI
+webview.show("Clean Architecture Application", 800, 600, ui)

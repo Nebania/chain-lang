@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "types.h"
 #include <cctype>
 #include <stdexcept>
 #include <unordered_map>
@@ -17,7 +18,8 @@ static const std::unordered_map<std::string, TokenType> keywords = {
     {"break", TokenType::BREAK},			{"continue", TokenType::CONTINUE}, 
     {"and", TokenType::AND}, 			{"or", TokenType::OR}, 
     {"true", TokenType::TRUE},          {"false", TokenType::FALSE}, 
-    {"clear", TokenType::CLEAR},        {"cls", TokenType::CLS} 
+    {"clear", TokenType::CLEAR},        {"cls", TokenType::CLS},
+    {"match", TokenType::MATCH} 
 };
 
 Lexer::Lexer(const std::string& source) : src(source), pos(0), line(1), column(1) {
@@ -64,11 +66,31 @@ Token Lexer::stringLiteral() {
     int startCol = column;
     std::string value;
     advance(); 
+    
     while (peek() != '"' && peek() != '\0') {
-        if (peek() == '\n') throw std::runtime_error("Unterminated string");
-        value += advance();
+        if (peek() == '\n') {
+            value += advance();
+            line++;      
+            column = 1;  
+            continue;
+        }
+        
+        if (peek() == '\\') {
+            advance(); 
+            if (peek() == '\0') throw ChainError(line, column, "Unterminated string");
+            
+            char escaped = advance();
+            if (escaped == 'n') value += '\n';
+            else if (escaped == 't') value += '\t';
+            else if (escaped == '"') value += '"';
+            else if (escaped == '\\') value += '\\';
+            else value += escaped;
+        } else {
+            value += advance();
+        }
     }
-    if (!match('"')) throw std::runtime_error("Unterminated string");
+    
+    if (!match('"')) throw ChainError(line, column, "Unterminated string");
     return Token{TokenType::STRING, value, line, startCol};
 }
 
@@ -253,6 +275,7 @@ std::vector<Token> Lexer::tokenize() {
         if (c == '=') { 
             advance(); 
             if (match('=')) tokens.push_back(makeToken(TokenType::EQ_EQ, "=="));
+            else if (match('>')) tokens.push_back(makeToken(TokenType::FAT_ARROW, "=>"));
             else tokens.push_back(makeToken(TokenType::ASSIGN, "=")); 
             continue; 
         }
@@ -282,7 +305,11 @@ std::vector<Token> Lexer::tokenize() {
         
         if (c == '/') { 
             advance(); 
-            if (match('=')) tokens.push_back(makeToken(TokenType::SLASH_EQ, "/=")); 
+            if (match('/')) { 
+                skipComment();
+                continue;
+            }
+            else if (match('=')) tokens.push_back(makeToken(TokenType::SLASH_EQ, "/=")); 
             else tokens.push_back(makeToken(TokenType::SLASH, "/")); 
             continue;
         }

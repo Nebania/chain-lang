@@ -1,0 +1,8 @@
+set users = ["ahmed", "noobhack", "root"]
+
+for user in users {
+    print(user)
+    
+    set hasil_terminal = os.exec("echo 'Welcome back, " + user + "'")
+    print(hasil_terminal)
+}

@@ -18,7 +18,7 @@ while active {
     set cmd_line = input(prompt_text)
 
     # 2. Command Parsing
-    if str.len(cmd_line) > 0 {
+    if len(cmd_line) > 0 {
         set parts = str.split(cmd_line, " ")
         # Take the first command (example: "cd", "ls", "help")
         # Currently fetched manually from index 0 (since list[0] is limited)
@@ -47,7 +47,10 @@ while active {
         }
         else {
             # If not an internal shell command, pass it to the system (ls, git, etc)
-            os.exec(cmd_line)
+            set hasil = os.exec(cmd_line)
+            if len(hasil) > 0 {
+                print(hasil)
+            }
         }
     }
 }

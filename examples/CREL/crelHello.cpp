@@ -1,4 +1,6 @@
 #include "CREL.hpp"
+#include <string>
+#include <vector>
 
 #ifdef _WIN32
 #define CREL_EXPORT __declspec(dllexport)
@@ -7,12 +9,12 @@
 #endif
 
 extern "C" CREL_EXPORT
-void CREL_Init(CREL* crel)
-{
+void CREL_Init(CREL* crel) {
+    
     crel->registerFunction(
         "crelHello",
         [](const std::vector<Obj>& args) -> Obj {
-            return std::string("Hello from CREL!");
+            return Obj(std::string("Hello from CREL!"));
         }
     );
 }

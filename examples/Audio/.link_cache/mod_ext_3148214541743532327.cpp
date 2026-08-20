@@ -1,0 +1,220 @@
+#include <iostream>
+#include <string>
+#define print(x) std::cout << (x) << std::endl;
+#define LINK_win_w (((int*)link_shm)[0])
+#define LINK_win_h (((int*)link_shm)[1])
+    #include <raylib.h>
+    #include <math.h>
+    #include <stdio.h>
+    #include <vector>
+    #include <string>
+
+extern "C" void link_entry(void* link_shm) {
+
+
+    InitWindow(LINK_win_w, LINK_win_h, "Chain MP3 Player Pro");
+    InitAudioDevice();
+
+    // ==========================================
+    // 1. List of Playlist
+    // ==========================================
+    std::vector<std::string> playlist = {
+        "vault.mp3", 
+        "museum.mp3"
+    };
+    int currentSong = 0;
+
+    bool isPlaying = true;
+    bool isLooping = false;
+    Music music;
+
+    // ==========================================
+    // 2. AUDIO PROCESSOR
+    // ==========================================
+    static float audio_buffer[256] = {0};
+    auto AudioProcess = [](void *buffer, unsigned int frames) {
+        float *samples = (float *)buffer;
+        for (unsigned int i = 0; i < 256 && i < frames; i++) {
+            audio_buffer[i] = samples[i * 2]; 
+        }
+    };
+
+    auto LoadSong = [&](int index) {
+        if (music.ctxData != NULL) {
+            DetachAudioStreamProcessor(music.stream, AudioProcess);
+            UnloadMusicStream(music);
+        }
+        music = LoadMusicStream(playlist[index].c_str());
+        music.looping = isLooping;
+        if (music.ctxData != NULL) {
+            PlayMusicStream(music);
+            AttachAudioStreamProcessor(music.stream, AudioProcess);
+            isPlaying = true;
+        }
+    };
+
+    LoadSong(currentSong);
+    SetTargetFPS(60);
+
+    // Smoothing Function for the Bargraph
+    float smoothed_bands[5] = {0};
+
+    // ==========================================
+    // 3. MAIN LOOP
+    // ==========================================
+    while (!WindowShouldClose()) {
+        if (isPlaying) UpdateMusicStream(music);
+
+        if (GetMusicTimePlayed(music) >= GetMusicTimeLength(music) && !isLooping) {
+            currentSong = (currentSong + 1) % playlist.size();
+            LoadSong(currentSong);
+        }
+
+        Vector2 mouse = GetMousePosition();
+        bool clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+        Rectangle progressBg = { 50, (float)LINK_win_h - 90, (float)LINK_win_w - 100, 15 };
+        Rectangle btnPrev  = { (float)LINK_win_w/2 - 100, (float)LINK_win_h - 50, 40, 30 };
+        Rectangle btnPlay  = { (float)LINK_win_w/2 - 40,  (float)LINK_win_h - 55, 80, 40 };
+        Rectangle btnNext  = { (float)LINK_win_w/2 + 60,  (float)LINK_win_h - 50, 40, 30 };
+        Rectangle btnLoop  = { (float)LINK_win_w - 120,   (float)LINK_win_h - 50, 70, 30 };
+
+        if (clicked && CheckCollisionPointRec(mouse, progressBg)) {
+            float pct = (mouse.x - progressBg.x) / progressBg.width;
+            SeekMusicStream(music, pct * GetMusicTimeLength(music));
+        }
+        if (clicked && CheckCollisionPointRec(mouse, btnPrev)) {
+            currentSong = (currentSong - 1 < 0) ? playlist.size() - 1 : currentSong - 1;
+            LoadSong(currentSong);
+        }
+        if (clicked && CheckCollisionPointRec(mouse, btnNext)) {
+            currentSong = (currentSong + 1) % playlist.size();
+            LoadSong(currentSong);
+        }
+        if (clicked && CheckCollisionPointRec(mouse, btnPlay)) {
+            isPlaying = !isPlaying;
+            if (isPlaying) ResumeMusicStream(music);
+            else PauseMusicStream(music);
+        }
+        if (clicked && CheckCollisionPointRec(mouse, btnLoop)) {
+            isLooping = !isLooping;
+            music.looping = isLooping;
+        }
+
+        // ==========================================
+        // 4. Calculating The 5-BAND EQ SPECTRUM
+        // ==========================================
+        float raw_bands[5] = {0};
+        
+        if (isPlaying) {
+            float spectrum[128] = {0};
+            // Starti from k=1 to dumping DC Offset (Freq Noises 0Hz)
+            for (int k = 1; k < 128; k++) {
+                float re = 0, im = 0;
+                for (int n = 0; n < 256; n++) {
+                    float angle = 2.0f * PI * k * n / 256.0f;
+                    re += audio_buffer[n] * cosf(angle);
+                    im -= audio_buffer[n] * sinf(angle);
+                }
+                spectrum[k] = sqrtf(re * re + im * im);
+            }
+
+            // Grouping 127 frequencies onto 5 Bands
+            int bandLimits[6] = {1, 4, 10, 26, 61, 128}; 
+            
+            for (int b = 0; b < 5; b++) {
+                float sum = 0;
+                int count = bandLimits[b+1] - bandLimits[b];
+                for (int k = bandLimits[b]; k < bandLimits[b+1]; k++) {
+                    sum += spectrum[k];
+                }
+                raw_bands[b] = sum / count; // Sum of Average on this Bands
+                
+                // Visual Boost 
+                if (b == 2) raw_bands[b] *= 1.5f;
+                if (b == 3) raw_bands[b] *= 2.0f;
+                if (b == 4) raw_bands[b] *= 3.0f;
+            }
+        }
+
+        // Smoothing the Bargraph
+        for (int i = 0; i < 5; i++) {
+            smoothed_bands[i] += (raw_bands[i] - smoothed_bands[i]) * 0.2f;
+        }
+
+        // ==========================================
+        // 5. Displaying the result 
+        // ==========================================
+        BeginDrawing();
+        ClearBackground({ 15, 15, 20, 255 });
+
+        DrawText("NEBULA AUDIO PLAYER", 20, 20, 20, {0, 255, 255, 255});
+        DrawText(TextFormat("Now Playing: %s", playlist[currentSong].c_str()), 20, 50, 20, LIGHTGRAY);
+
+        // --- Image of 5 BAR EQ ---
+        const char* bandNames[5] = {"LOW", "LOW-MID", "MID", "MID-HIGH", "HIGH"};
+        int barWidth = 100;
+        int spacing = 30;
+        int totalWidth = (5 * barWidth) + (4 * spacing);
+        int startX = (LINK_win_w - totalWidth) / 2; 
+
+        for (int i = 0; i < 5; i++) {
+            float height = smoothed_bands[i] * 40.0f; 
+            if (height > LINK_win_h - 250) height = LINK_win_h - 250; 
+            if (height < 5) height = 5; 
+
+            //  (Blue to Cyan)
+            Color barColor = { 0, (unsigned char)(100 + height), 255, 255 };
+            
+            int xPos = startX + i * (barWidth + spacing);
+            int yPos = (LINK_win_h - 140) - (int)height;
+
+            // Bar Displaying
+            DrawRectangle(xPos, yPos, barWidth, (int)height, barColor);
+            
+            // Texting under the Bargraph
+            int textW = MeasureText(bandNames[i], 15);
+            DrawText(bandNames[i], xPos + (barWidth/2 - textW/2), LINK_win_h - 130, 15, LIGHTGRAY);
+        }
+
+        // --- PROGRESS BAR ---
+        float timePlayed = GetMusicTimePlayed(music);
+        float timeLength = GetMusicTimeLength(music);
+        float progressWidth = (timeLength > 0) ? (timePlayed / timeLength) * progressBg.width : 0;
+
+        DrawRectangleRec(progressBg, DARKGRAY);
+        DrawRectangle(progressBg.x, progressBg.y, progressWidth, progressBg.height, {0, 200, 255, 255});
+
+        int pMin = (int)timePlayed / 60, pSec = (int)timePlayed % 60;
+        int lMin = (int)timeLength / 60, lSec = (int)timeLength % 60;
+        DrawText(TextFormat("%02d:%02d", pMin, pSec), 10, progressBg.y, 15, LIGHTGRAY);
+        DrawText(TextFormat("%02d:%02d", lMin, lSec), progressBg.x + progressBg.width + 10, progressBg.y, 15, LIGHTGRAY);
+
+        // --- Control Button ---
+        Color btnColor = {50, 50, 60, 255};
+        Color hoverColor = {80, 80, 100, 255};
+
+        DrawRectangleRec(btnPrev, CheckCollisionPointRec(mouse, btnPrev) ? hoverColor : btnColor);
+        DrawText("|<", btnPrev.x + 12, btnPrev.y + 8, 15, WHITE);
+
+        DrawRectangleRec(btnPlay, CheckCollisionPointRec(mouse, btnPlay) ? hoverColor : btnColor);
+        DrawText(isPlaying ? "||" : ">", btnPlay.x + (isPlaying ? 35 : 35), btnPlay.y + 10, 20, WHITE);
+
+        DrawRectangleRec(btnNext, CheckCollisionPointRec(mouse, btnNext) ? hoverColor : btnColor);
+        DrawText(">|", btnNext.x + 12, btnNext.y + 8, 15, WHITE);
+
+        Color loopColor = isLooping ? (Color){0, 200, 255, 255} : btnColor;
+        DrawRectangleRec(btnLoop, CheckCollisionPointRec(mouse, btnLoop) ? hoverColor : loopColor);
+        DrawText("LOOP", btnLoop.x + 15, btnLoop.y + 8, 15, WHITE);
+
+        EndDrawing();
+    }
+
+    if (music.ctxData != NULL) {
+        DetachAudioStreamProcessor(music.stream, AudioProcess);
+        UnloadMusicStream(music);
+    }
+    CloseAudioDevice();
+    CloseWindow();
+
+}

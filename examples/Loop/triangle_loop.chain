@@ -1,0 +1,12 @@
+# How To Draw a Phytagoras on Your Screen
+
+print("=== Star Triangle ===") 
+
+set limit = 5
+set stars = "" 
+
+for i in range(limit) { 
+    # Added 1 Star into 'stars' variable for each loop 
+    set stars = stars + "* " 
+    print(stars) 
+} 

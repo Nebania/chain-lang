@@ -34,22 +34,29 @@ while gui_running() {
             
             if current_input == "clear" { 
                 set history = os.unescape("NebulaOS Terminal (Reset).\n") 
-            } else {
-                if str.starts_with(current_input, "cd ") {
-                    set target = str.substr(current_input, 3)
-                    os.chdir(target)
-                    set history = history + os.unescape(prompt + current_input + "\n(Directory Changed)\n")
-                } else {
-                    set output = os.exec(current_input)
-                    set log = prompt + current_input + "\n" + output + "\n"
-                    set history = history + os.unescape(log)
-                }
+            } 
+            # ---> EASTER EGG <---
+            elif current_input == "chain" {
+                set log = prompt + current_input + "\ndont do that! You want to destroy your computer?\n"
+                set history = history + os.unescape(log)
             }
+            # ----------------------------------------
+            elif str.starts_with(current_input, "cd ") {
+                set target = str.substr(current_input, 3)
+                os.chdir(target)
+                set history = history + os.unescape(prompt + current_input + "\n(Directory Changed)\n")
+            } 
+            else {
+                set output = os.exec(current_input)
+                set log = prompt + current_input + "\n" + output + "\n"
+                set history = history + os.unescape(log)
+            }
+            
             set current_input = ""
         }
     }
 
-    # --- 3. MOUSE SCROLL LOGIC [NEW] ---
+    # --- 3. MOUSE SCROLL LOGIC ---
     
     # Get scroll input (-1, 0, or 1 usually)
     set wheel = gui.get_mouse_wheel()
@@ -80,7 +87,6 @@ while gui_running() {
     }
     
     # Apply Manual Scroll
-    # Final Position = Base Position + User Scroll
     set final_y = start_y + manual_scroll
 
     # --- 5. RENDER ---

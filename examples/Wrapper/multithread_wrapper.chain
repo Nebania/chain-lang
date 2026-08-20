@@ -1,0 +1,22 @@
+set data = 25
+
+# Running Heavy Calculation via C++ Native
+extern "c" "-O3" {
+    #include <iostream>
+    #include <cmath>
+
+    LINK_data = std::pow(LINK_data, 2);
+    std::cout << "[Native C++] Root Result : " << LINK_data << std::endl;
+}
+
+# Running in Background Thread
+func worker() {
+    print("Running Process in Background...")
+    time.sleep(500)
+    print("Finished! Final Result: " + data)
+}
+
+thread.spawn(worker)
+
+# because the process is so fast, its need delay :) 
+time.sleep(100)

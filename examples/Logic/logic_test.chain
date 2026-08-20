@@ -1,0 +1,37 @@
+# --- Advanced IF-ELSE Test ---
+
+# 1. Basic If-Else
+set score = 40
+print(score)
+
+if score <  50
+    print(1) # True
+else
+    print(0) # False
+
+
+# 2. Elif Chain (Ranking System)
+set rank = 85
+print(rank)
+
+if rank > 90
+    print(100) # Rank S
+elif rank > 80
+    print(200) # Rank A (Output : 200)
+elif rank > 70
+    print(300) # Rank B
+else
+    print(400) # Rank C
+
+
+# 3. Nested If (Login Simulation)
+set user_active = 1
+set user_admin = 0
+
+if user_active == 1
+    if user_admin == 1
+        print(999) # Admin Access
+    else
+        print(111) # User Access (Output : 111)
+else
+    print(0) # Inactive

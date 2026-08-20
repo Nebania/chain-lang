@@ -1,0 +1,31 @@
+print("=== ChainLang Scientific Computing ===")
+
+# 1. Constant
+print(" PI : " + math.pi())
+print(" E  : " + math.e()) # Epsilon 
+
+# 2. Sigmoid Func (For AI Development (Neural Networks))
+func sigmoid(x) {
+    return 1.0 / (1.0 + math.exp(-x))
+}
+
+print("\n--- Sigmoid Activation ---")
+print("Sigmoid(0)  : " + sigmoid(0))
+print("Sigmoid(2)  : " + sigmoid(2))
+print("Sigmoid(-2) : " + sigmoid(-2))
+
+# 3. Euclidean Distance (Phytagorean Theorem)
+func distance(x1, y1, x2, y2) {
+    set dx = x2 - x1
+    set dy = y2 - y1
+    return math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+}
+
+print("\n--- Euclidean Distance ---")
+print("Distance value from (0,0) to (3,4) is: " + distance(0, 0, 3, 4)) # Result is guaranteed to be 5
+
+# 4. Integration
+print("\n--- Utilities ---")
+print("Log10(1000) : " + math.log10(1000))
+print("Round(4.6)  : " + math.round(4.6))
+print("Max(10, 25) : " + math.max(10, 25))

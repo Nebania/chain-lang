@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <chrono> // <-- TAMBAHKAN INI UNTUK MENGUKUR WAKTU
+#include <chrono> 
 #include "lexer.h"
 #include "parser.h"
 #include "runtime.h" 
@@ -32,6 +32,32 @@ bool isBlockStart(const std::string& line) {
     return false;
 }
 
+void printVisualError(const std::string& source, const ChainError& e) {
+    std::cout << "\n\033[1;31m[Chain Error]\033[0m " << e.message << "\n";
+    std::cout << "  --> line " << e.line << ":" << e.col << "\n\n";
+
+    std::vector<std::string> lines;
+    std::string currentLine;
+    for (char c : source) {
+        if (c == '\n') { lines.push_back(currentLine); currentLine = ""; }
+        else { currentLine += c; }
+    }
+    lines.push_back(currentLine);
+
+    if (e.line > 1 && e.line - 2 < (int)lines.size()) {
+        std::cout << " " << (e.line - 1) << " | " << lines[e.line - 2] << "\n";
+    }
+    
+    if (e.line > 0 && e.line - 1 < (int)lines.size()) {
+        std::cout << "\033[1;31m>\033[0m" << e.line << " | " << lines[e.line - 1] << "\n";
+        
+        std::cout << "  " << std::string(std::to_string(e.line).length(), ' ') << " | ";
+        for (int i = 1; i < e.col; i++) std::cout << " ";
+        std::cout << "\033[1;33m^^^ Here :)\033[0m\n";
+    }
+    std::cout << "\n";
+}
+
 void run(Runtime& runtime, const std::string& source, bool isDebug) {
     try {
         Lexer lexer(source);
@@ -47,8 +73,10 @@ void run(Runtime& runtime, const std::string& source, bool isDebug) {
 
         runtime.execute(std::move(program)); 
 
+    } catch (const ChainError& e) {
+        printVisualError(source, e); 
     } catch (const std::exception& e) {
-        std::cerr << "Chain has run into an error: " << e.what() << std::endl;
+        std::cerr << "\033[1;31m[Runtime Error]\033[0m " << e.what() << std::endl;
     }
 }
 
@@ -67,23 +95,33 @@ int main(int argc, char** argv) {
         return name.compare(name.size() - ext.size(),ext.size(),ext) == 0;
     };
 
-    // Parse command-line arguments
     for (int i = 1; i < argc; i++) {
 
         std::string arg = argv[i];
-        if (arg == "--version") {
-            printVersion();
-            return 0;
-        }
-        else if (arg == "--help") {
-            printHelp();
-            return 0;
-        }
-        else if (arg == "--debug") {
+
+        if (arg == "--debug") {
             debugMode = true;
         }
 
         else if (arg == "--time") {
+            timeMode = true;
+        }
+
+        else if (arg == "--help" || arg == "-h") {
+            printHelp();
+            return 0;
+        }
+
+        else if (arg == "--version" || arg == "-v") {
+            printVersion();
+            return 0;
+        }
+
+        else if (arg == "--debug" || arg == "-d") {
+            debugMode = true;
+        }
+
+        else if (arg == "--time" || arg == "-t") {
             timeMode = true;
         }
 
@@ -102,7 +140,6 @@ int main(int argc, char** argv) {
             libraries.push_back(library);
         }
 
-        // Anything else is assumed to be the Chain file
         else {
             if (filename.empty()) {
                 filename = arg;
@@ -130,7 +167,7 @@ int main(int argc, char** argv) {
 
     // Jika tidak ada argumen file, masuk ke REPL
     if (argc < 2 || argc == 1 + flagsCount) {
-        std::cout << "Nebania Chain v0.6.0 (Analyzer)" << std::endl;
+        std::cout << "Nebania Chain v0.5 (Analyzer)" << std::endl;
         if (debugMode) std::cout << "[DEBUG MODE ACTIVE]" << std::endl;
         if (timeMode) std::cout << "[TIME PROFILER ACTIVE]" << std::endl;
         std::cout << "Type 'exit' to quit." << std::endl;
@@ -199,9 +236,8 @@ int main(int argc, char** argv) {
     std::string source((std::istreambuf_iterator<char>(file)),
                         std::istreambuf_iterator<char>());
 
-    // --- EKSEKUSI PROGRAM DENGAN ATAU TANPA PROFILER ---
     if (timeMode) {
-        runtime.enableProfiling = true; // Beritahu Runtime untuk melacak per-fungsi
+        runtime.enableProfiling = true; 
         
         auto start = std::chrono::high_resolution_clock::now();
         run(runtime, source, debugMode);
@@ -217,4 +253,4 @@ int main(int argc, char** argv) {
     }
 
     return 0;        
-}
+} 

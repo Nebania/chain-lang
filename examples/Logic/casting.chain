@@ -15,6 +15,6 @@ set msg = "My Score: " + str(number)
 print(msg)
 
 # 4. Input Dinamis
-set birth = int(input("Masukkan tahun lahir (String): "))
-set umur = 2026 - birth
-print("Age Approximation : " + umur + " tahun.")
+set birth = int(input("Your Birth Year (String): "))
+set age = 2026 - birth
+print("Age Approximation : " + age + " years old.")

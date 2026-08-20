@@ -1,0 +1,33 @@
+# ui.chain
+
+func drawTopMenu(width) {
+    # Background Menu Atas
+    gui_rect(0, 0, width, 30, "black")
+    gui_line(0, 30, width, 30, 1, "gray")
+    
+    # Tombol Menu
+    gui_text(10, 5, "Chain-Editor", "cyan", 20)
+    gui_text(150, 5, "File", "white", 18)
+    gui_text(200, 5, "Edit", "white", 18)
+    gui_text(250, 5, "Run (F5)", "green", 18)
+}
+
+func drawSidebar(height) {
+    # Background Sidebar Kiri
+    gui_rect(0, 31, 50, height, "black")
+    gui_line(50, 31, 50, height, 1, "gray")
+    
+    # Ikon File (Simulasi)
+    gui_text(15, 50, "[]", "gray", 20)
+    gui_text(15, 90, "<>", "gray", 20)
+}
+
+func drawStatusBar(width, height, line, col) {
+    # Background Bawah
+    gui_rect(0, height - 25, width, 25, "black")
+    gui_line(0, height - 25, width, height - 25, 1, "gray")
+    
+    # Info Status
+    set info = "Line " + line + "  Col " + col + "  |  UTF-8  |  ChainLang"
+    gui_text(width - 300, height - 20, info, "white", 15)
+}

@@ -1,0 +1,139 @@
+print("=== CHAINLANG INTERACTIVE CANVAS ===")
+
+gui_setup(800, 600, "ChainLang Interactive Canvas (Pan & Zoom)")
+gui_load_font("hack.ttf", 28) 
+
+# 1. Camera Variables (Virtual Camera)
+set camX = 0.0          # Camera X position in virtual world
+set camY = 0.0          # Camera Y position in virtual world
+set camZoom = 1.0       # Zoom Level (1.0 = 100%)
+
+# Variables for Drag feature (Pan Screen)
+set isDragging = false
+set lastMouseX = 0
+set lastMouseY = 0
+
+# 2. Virtual World Data (Example: 50 random boxes)
+set objects = []
+for i in range(50) {
+    set obj = {
+        "x": math.randint(-1000, 1000),
+        "y": math.randint(-1000, 1000),
+        "size": math.randint(20, 100)
+    }
+    list.add(objects, obj)
+}
+
+# 3. Main Loop
+while gui_running() {
+    gui_start()
+    gui_clear("white")
+
+    # ==========================================
+    # INTERACTIVE LOGIC (PAN & ZOOM)
+    # ==========================================
+    
+    # A. ZOOM Feature (Using Mouse Wheel)
+    set wheel = gui.get_mouse_wheel()
+    if wheel != 0.0 {
+        # Store mouse position before zoom (as focus point)
+        set mx = gui.mouse_x()
+        set my = gui.mouse_y()
+        
+        # Calculate mouse position in virtual world BEFORE zoom
+        set worldX_before = (mx - camX) / camZoom
+        set worldY_before = (my - camY) / camZoom
+
+        # Perform Zoom (Add/Subtract 10%)
+        if wheel > 0.0 { set camZoom = camZoom * 1.1 }
+        else { set camZoom = camZoom * 0.9 }
+        
+        # Clamp Zoom level to prevent zooming too far in/out
+        if camZoom < 0.1 { set camZoom = 0.1 }
+        if camZoom > 5.0 { set camZoom = 5.0 }
+
+        # Calculate mouse position in virtual world AFTER zoom
+        set worldX_after = (mx - camX) / camZoom
+        set worldY_after = (my - camY) / camZoom
+
+        # Pan camera so the zoom focal point remains at the mouse cursor
+        set camX = camX + ((worldX_after - worldX_before) * camZoom)
+        set camY = camY + ((worldY_after - worldY_before) * camZoom)
+    }
+
+    # B. PAN / DRAG Feature (Pan Screen)
+    set currentMouseX = gui.mouse_x()
+    set currentMouseY = gui.mouse_y()
+
+    if gui_is_mouse_down() {
+        if isDragging == false {
+            # Started click
+            set isDragging = true
+            set lastMouseX = currentMouseX
+            set lastMouseY = currentMouseY
+        } else {
+            # Currently dragging
+            set deltaX = currentMouseX - lastMouseX
+            set deltaY = currentMouseY - lastMouseY
+            
+            # Pan camera position
+            set camX = camX + deltaX
+            set camY = camY + deltaY
+            
+            # Update last position
+            set lastMouseX = currentMouseX
+            set lastMouseY = currentMouseY
+        }
+    } else {
+        # Mouse released
+        set isDragging = false
+    }
+
+    # ==========================================
+    # RENDER VIRTUAL WORLD
+    # ==========================================
+    
+    # Render all objects by applying camera position and zoom
+    for i in range(len(objects)) {
+        set obj = objects[i]
+        
+        # Screen Projection Formula: (World Position * Zoom) + Camera Position
+        set screenX = (obj.x * camZoom) + camX
+        set screenY = (obj.y * camZoom) + camY
+        set screenSize = obj.size * camZoom
+        
+        # Only render if within screen bounds (Culling Optimization)
+        if screenX > -200 and screenX < gui.width() + 200 {
+            if screenY > -200 and screenY < gui.height() + 200 {
+                # Draw the box
+                gui_rect(screenX, screenY, screenSize, screenSize, "blue")
+                
+                # Draw frame/border (using 4 lines)
+                gui_line(screenX, screenY, screenX + screenSize, screenY, 2, "black")
+                gui_line(screenX, screenY, screenX, screenY + screenSize, 2, "black")
+                gui_line(screenX + screenSize, screenY, screenX + screenSize, screenY + screenSize, 2, "black")
+                gui_line(screenX, screenY + screenSize, screenX + screenSize, screenY + screenSize, 2, "black")
+            }
+        }
+    }
+
+    # Draw world origin point (Coordinate 0,0)
+    set originX = (0 * camZoom) + camX
+    set originY = (0 * camZoom) + camY
+    gui_rect(originX - 5, originY - 5, 10, 10, "red")
+    gui_text(originX + 10, originY - 10, "Origin Point (0,0)", "red", 20)
+
+    # ==========================================
+    # RENDER UI (Fixed on screen)
+    # ==========================================
+    gui_rect(0, 0, gui.width(), 40, "gray")
+    gui_text(10, 10, "Scroll to Zoom | Click & Drag to Pan", "white", 20)
+    
+    # Display Zoom status (rounded)
+    set zoomPercent = math.round(camZoom * 100)
+    gui_text(gui.width() - 150, 10, "Zoom: " + zoomPercent + "%", "white", 20)
+
+    gui_present()
+}
+
+gui_close()

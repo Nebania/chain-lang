@@ -1,0 +1,9 @@
+for i in range(5) {
+    # Eksekusi terminal dan bersihkan enter di belakangnya
+    set term1 = str.trim(os.exec("echo 'Scanning port 8080...'"))
+    
+    # Ubah 'i' menjadi string, lalu gabungkan dengan hasil terminal
+    print(str(i) + " : " + term1)
+    
+    time.sleep(1000)
+}

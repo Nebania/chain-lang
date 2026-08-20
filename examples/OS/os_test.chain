@@ -6,15 +6,14 @@ print("Kernel Version: " + kernel)
 set sysinfo = os.exec("uname -a")
 
 if str.contains(sysinfo, "Linux")
-    print("Sistem terdeteksi: LINUX")
+    print("Detected System: LINUX")
     
     # Check user
     set user = os.exec("whoami")
     print("Current User: " + user)
 else
-    print("Bukan Linux?")
+    print("Not a Linux?")
 
 # Calculate string length
 set text = "NebulaOS"
-print("Panjang 'NebulaOS' adalah:")
-print(len(text))
+print("Length of 'NebulaOS' word is : " + len(text))

@@ -6,30 +6,14 @@ term.clear()
 term.move(2, 10)
 print(term.color("cyan") + "╔══════════════════════════════════╗" + term.reset())
 term.move(3, 10)
-print(term.color("cyan") + "║      L I N K - L A N G           ║" + term.reset())
+print(term.color("cyan") + "║      C H A I N - L A N G         ║" + term.reset())
 term.move(4, 10)
 print(term.color("cyan") + "╚══════════════════════════════════╝" + term.reset())
 
 term.move(6, 10)
 print("System Version: " + term.color("yellow") + "v0.4a (Alpha Release)" + term.reset())
 
-# 2. Loading Bar Animation Function
-func progressBar(step, total) {
-    term.move(8, 10)
-    print("Loading modules: [" + term.color("green"))
-    
-    # Draw the bar (e.g. "#####")
-    term.move(10, 28)
-    for i in range(step) {
-        # Trick: print without newline (use io.write to stdout if you want it perfect, 
-        # but plain print is also okay as long as it is in the right position)
-    }
-    # Because print automatically adds a newline, we workaround by updating the status text only
-    term.move(10, 30 + step) 
-    print("#") 
-}
-
-# 3. Boot Simulation
+# 2. Loading Bar Simulation
 set steps = [
     "Kernel Initialization...",
     "Mounting File System...",
@@ -41,18 +25,23 @@ set steps = [
 set y_pos = 12
 
 for status in steps {
-    # Display the Status
+    # Status Shows Up
     term.move(y_pos, 10)
     print(term.color("white") + "[ " + term.color("green") + "OK" + term.color("white") + " ] " + status + term.reset())
     
-    # Pause so it looks like thinking
+    # Loading Animation (Take Your Time Grab a Coffee :D)
     time.sleep(800)
+    
     set y_pos = y_pos + 1
 }
 
 term.move(y_pos + 2, 10)
-print(term.color("magenta") + ">>> WELCOME TO LINK TERMINAL <<<" + term.reset())
+print(term.color("magenta") + ">>> WELCOME TO NEBULA TERMINAL <<<" + term.reset())
+
 term.move(y_pos + 8, 2)
 print(" ")
-time.sleep(3000)
-os.exec("./link")
+
+time.sleep(2000)
+
+# 3. Moving to a Demo Shell 
+import "shell.chain"

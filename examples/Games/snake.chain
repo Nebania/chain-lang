@@ -33,17 +33,33 @@ while gui_running() {
 
     # 1. HANDLING INPUT 
     if moved_this_turn == 0 {
-        if gui_is_key_pressed("UP") {
-            if dy == 0 { set dx = 0; set dy = -1; set moved_this_turn = 1 }
+        if gui_is_key_pressed("UP") or gui_is_key_pressed("W") {
+            if dy == 0 { 
+                set dx = 0 
+                set dy = -1 
+                set moved_this_turn = 1 
+            }
         }
-        elif gui_is_key_pressed("DOWN") {
-            if dy == 0 { set dx = 0; set dy = 1; set moved_this_turn = 1 }
+        elif gui_is_key_pressed("DOWN") or gui_is_key_pressed("S") {
+            if dy == 0 { 
+                set dx = 0 
+                set dy = 1 
+                set moved_this_turn = 1 
+            }
         }
-        elif gui_is_key_pressed("LEFT") {
-            if dx == 0 { set dx = -1; set dy = 0; set moved_this_turn = 1 }
+        elif gui_is_key_pressed("LEFT") or gui_is_key_pressed("A") {
+            if dx == 0 { 
+                set dx = -1
+                set dy = 0 
+                set moved_this_turn = 1 
+            }
         }
-        elif gui_is_key_pressed("RIGHT") {
-            if dx == 0 { set dx = 1; set dy = 0; set moved_this_turn = 1 }
+        elif gui_is_key_pressed("RIGHT") or gui_is_key_pressed("D") {
+            if dx == 0 { 
+                set dx = 1
+                set dy = 0
+                set moved_this_turn = 1 
+            }
         }
     }
 

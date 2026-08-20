@@ -10,12 +10,11 @@ namespace SysGui {
     bool isFontLoaded = false;
     std::map<std::string, Texture2D> imageRegistry;
     
-    bool _shouldClose = false; // Gunakan variabel internal
-    bool _guiDebug = false; // Debug Flag
+    bool _shouldClose = false; 
+    bool _guiDebug = false; 
 
     void enableDebug() {
         _guiDebug = true;
-        // Kembalikan log Raylib ke tingkat normal (INFO, WARNING, ERROR, dll)
         SetTraceLogLevel(LOG_INFO); 
         std::cout << "[CHAIN] GUI Debug Mode Enabled.\n";
     }
@@ -131,6 +130,18 @@ namespace SysGui {
         DrawRectangle(x, y, w, h, c);
     }
 
+    void drawLine(int x1, int y1, int x2, int y2, int thick, const std::string& color) {
+        Color c = BLACK;
+        if (color == "white") c = WHITE;
+        else if (color == "red") c = RED;
+        else if (color == "green") c = GREEN;
+        else if (color == "blue") c = BLUE;
+        else if (color == "cyan") c = {0, 255, 255, 255};
+        else if (color == "gray") c = Fade(GRAY, 0.8f);
+        
+        DrawLineEx({(float)x1, (float)y1}, {(float)x2, (float)y2}, (float)thick, c);
+    }
+
     void drawText(int x, int y, const std::string& text, const std::string& color, int size) {
         Color c = BLACK;
         if (color == "white") c = WHITE;
@@ -152,13 +163,12 @@ namespace SysGui {
         }
     }
 
-    // --- INPUT HANDLING (INI YANG SEBELUMNYA ERROR/HILANG) ---
     int getMouseX() { return GetMouseX(); }
     int getMouseY() { return GetMouseY(); }
     float getMouseWheel() { return GetMouseWheelMove(); }
     
     bool isMousePressed() { return IsMouseButtonPressed(MOUSE_BUTTON_LEFT); }
-    bool isMouseDown() { return IsMouseButtonDown(MOUSE_BUTTON_LEFT); } // <- INI YANG HILANG DI ERROR LOG KAMU
+    bool isMouseDown() { return IsMouseButtonDown(MOUSE_BUTTON_LEFT); } 
 
     int getKeyPressed() { return GetKeyPressed(); }
     int getCharPressed() { return GetCharPressed(); }
@@ -175,6 +185,13 @@ namespace SysGui {
     }
     double getTime() {
         return GetTime();
+    }
+
+    void beginScissor(int x, int y, int w, int h) {
+        BeginScissorMode(x, y, w, h);
+    }
+    void endScissor() {
+        EndScissorMode();
     }
 
 } // end namespace
