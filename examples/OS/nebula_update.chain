@@ -19,11 +19,11 @@ set threats = [
 if io.exists(config["log_file"])
     io.remove(config["log_file"])
 
-# 4. Header Laporan
+# 4. Header Report
 io.write(config["log_file"], "=== SECURITY REPORT ===\nTarget: " + config["target"] + "\n\n", false)
 print("Starting Security Scan on: " + config["target"])
 
-# 5. Proses Scanning
+# 5. Scanning Process
 set id = 0
 for threat in threats
     print("\nScanning for signature: " + threat)

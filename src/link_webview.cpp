@@ -20,8 +20,7 @@ std::string urlEncode(const std::string& value) {
 }
 
 namespace SysWebview {
-    
-    // Simpan pointer webview secara global di namespace ini
+
     static webview::webview* currentWebview = nullptr;
 
     void create(const std::string& title, int width, int height, const std::string& html) {
@@ -35,7 +34,7 @@ namespace SysWebview {
             }
 
             webview::webview w(false, nullptr);
-            currentWebview = &w; // Simpan referensinya
+            currentWebview = &w; 
             
             w.set_title(title);
             w.set_size(width, height, WEBVIEW_HINT_NONE);
@@ -49,7 +48,7 @@ namespace SysWebview {
 
             w.run();
             
-            currentWebview = nullptr; // Bersihkan saat ditutup
+            currentWebview = nullptr; 
             std::filesystem::remove(tempFilePath);
 
         } catch (const std::exception& e) {
@@ -57,7 +56,6 @@ namespace SysWebview {
         }
     }
 
-    // --- FUNGSI BARU: Mengeksekusi JS dari ChainLang ---
     void eval(const std::string& js) {
         if (currentWebview != nullptr) {
             currentWebview->eval(js);

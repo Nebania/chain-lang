@@ -29,7 +29,7 @@ set running = true
 while running {
     drawMenu(choice)
     
-    # getch() Enter without pressing Enter keyboard
+    # getch() captures input directly without pressing Enter on the keyboard
     set key = term.getch()
 
     if key == "w" {
@@ -41,7 +41,7 @@ while running {
         if choice > 3 { set choice = 1 }
     }
     elif key == "q" {
-        set running = false # Keluar dari loop untuk mengeksekusi pilihan
+        set running = false # Exit loop to execute selected option
     }
 }
 
@@ -49,11 +49,11 @@ term.clear()
 
 # === BOOT SEQUENCE LOGIC ===
 if choice == 1 {
-    # Pastikan file kernel.chain ada di folder yang sama
+    # Ensure kernel.chain exists in the same directory
     import "kernel.chain"
 } 
 elif choice == 2 {
-    # Pastikan file recovery.chain ada di folder yang sama
+    # Ensure recovery.chain exists in the same directory
     import "recovery.chain"
 } 
 else {

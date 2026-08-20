@@ -4,7 +4,7 @@ print("Explode in ...")
 set i = 3
 while (i > 0) {
     print(i)
-    time.sleep(1000)  # Tidur 1000ms (1 detik)
+    time.sleep(1000)  # Sleep in 1000ms (1 second)
     set i = i - 1
 }
 

@@ -132,8 +132,7 @@ std::vector<Token> Lexer::tokenize() {
     std::vector<Token> tokens;
     while (pos < src.size()) {
         char c = peek();
-        
-        // Exception so #include and #define pass through for extern C++
+
         if (c == '#') { 
             if (src.substr(pos, 8) == "#include" || src.substr(pos, 7) == "#define") {
                 int startCol = column;
@@ -151,14 +150,12 @@ std::vector<Token> Lexer::tokenize() {
         if (std::isalpha(c) || c == '_') { 
             Token idToken = identifier();
             tokens.push_back(idToken); 
-            
-            // --- RAW BLOCK CATCHER FOR EXTERN ---
+
             if (idToken.type == TokenType::EXTERN) {
                 skipWhitespace();
                 if (peek() == '"') {
-                    tokens.push_back(stringLiteral()); // 1. Tangkap Bahasa (misal: "c")
-                    
-                    // Lambda helper to skip spaces and newlines without creating a NEWLINE token
+                    tokens.push_back(stringLiteral()); 
+    
                     auto skipSpaceAndNewlines = [&]() {
                         while (peek() == ' ' || peek() == '\t' || peek() == '\n' || peek() == '\r') {
                             if (peek() == '\n') { line++; column = 1; }
@@ -167,26 +164,22 @@ std::vector<Token> Lexer::tokenize() {
                     };
 
                     skipSpaceAndNewlines();
-                    
-                    // 2. Check if there is a second string (Optional flags, e.g. "-O3 -lraylib")
+ 
                     if (peek() == '"') {
                         tokens.push_back(stringLiteral());
                         skipSpaceAndNewlines();
                     }
-                    
-                    // 3. Start capturing raw C++ code
+
                     if (peek() == '{') {
-                        advance(); // Makan '{'
+                        advance(); 
                         tokens.push_back(makeToken(TokenType::LBRACE, "{"));
                         
                         std::string rawCode = "";
                         int braceCount = 1;
-                        
-                        // Loop penangkap teks murni (Mengabaikan aturan token Chain)
+ 
                         while (braceCount > 0 && pos < src.size()) {
                             char nextChar = peek();
-                            
-                            // Abaikan kurung kurawal di dalam string C++ (misal: print("{"))
+ 
                             if (nextChar == '"') {
                                 rawCode += advance();
                                 while(peek() != '"' && pos < src.size()) {
@@ -200,18 +193,17 @@ std::vector<Token> Lexer::tokenize() {
                             if (nextChar == '{') braceCount++;
                             else if (nextChar == '}') {
                                 braceCount--;
-                                if (braceCount == 0) break; // Berhenti di '}' terakhir
+                                if (braceCount == 0) break; 
                             }
                             
                             if (nextChar == '\n') { line++; column = 1; }
                             rawCode += advance();
                         }
-                        
-                        // Masukkan seluruh kode C++ sebagai 1 token string raksasa
+   
                         tokens.push_back(makeToken(TokenType::STRING, rawCode));
                         
                         if (peek() == '}') {
-                            advance(); // Makan '}'
+                            advance(); 
                             tokens.push_back(makeToken(TokenType::RBRACE, "}"));
                         }
                     }

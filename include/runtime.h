@@ -7,14 +7,12 @@
 #include <unordered_map>
 #include <functional>
 #include <variant>
-
-// Include dependency
 #include "types.h"
 #include "env.h"
 #include "parser.h" 
 #include <CREL/CREL.hpp>
 #include "crel_loader.h"
-// Native Function type definition
+
 using NativeFn = std::function<Obj(const std::vector<Obj>&)>;
 
 class Runtime {

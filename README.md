@@ -8,9 +8,9 @@
                   "Link your files with Chain!"
 ============= A Nebania Project =============
 ---------------------------------------------------------------------------
-Version   : 0.5 (Full Release) 
+Version   : 0.7.0 (Full Release) 
 Creator   : Pilot0253
-Developer : LoGoRo17 && Tohar777 
+Developer : LoGoRo17 && Tohar777
 PROJECT   : Chain (Interpreter)
 LANGUAGE  : C++
 OS        : Linux Distro / Android (Custom Kernel) ARM-v8a
@@ -24,7 +24,7 @@ C++ (Lexer, Parser, AST, Runtime).
 
 Features
 
-Chain has evolved from a simple math parser into a fully functional
+Chain has evolved from a simple math parser into a fully functional, production-ready
 scripting language.
 
 Core Capabilities
@@ -36,39 +36,51 @@ Core Capabilities
   - **Logic & Comparison:** Support for >, <, ==, !=, and, or operators.
   - **Control Flow:**
       - if, elif, else conditionals (recursive parsing).
+      - Pattern Matching (match ... =>) for modern branching.
       - while loops.
       - for loops (basic numeric range).
-      - try and catch for error handling.
+      - try and catch for robust error handling.
   - **I/O Operations:** Built-in print() and input().
   - **Hybrid Syntax:** Blocks can be defined by whitespace (Python-style) OR by
     using {} braces (C/Java-style).
-  - **Comments:** Use # for single-line comments.
+  - **Comments:** Use // for single-line comments.
 
-Advanced Features (v0.5 Major Update)
+Advanced Features (v0.7.0 Major Update)
 
   - **Object-Oriented Programming (OOP):** Full support for class, constructors
-    (init), methods, this, and object instantiation (new).
+    (init), methods, this, object instantiation (new), Inheritance, and Magic 
+    Methods (Operator Overloading).
+  - **First-Class Functions & Lambdas:** Functions can be assigned to variables 
+    and passed around dynamically using func(x) { ... }.
+  - **Concurrency (Goroutines):** Run heavy tasks in the background without 
+    blocking the main thread using thread.spawn(func).
+  - **Rust-like Visual Error Tracing:** Chain now points exactly to the line, 
+    column, and token where a Syntax or Runtime Error occurred using visual ^^^ markers.
   - **Modular System:** Use import "file.chain" to split your code into multiple
     files and build reusable libraries.
   - **Native C++ Wrapper (extern "c"):** The crown jewel of Chain. Write raw C++
     code directly inside your .chain scripts! Chain will automatically
     compile, cache, and execute it, sharing variables seamlessly via Shared
     Memory.
-  - **CREL(Chain Runtime Extension Library)** CREL is a library that lets developers creating low-level,native libraries using C++
+  - **CREL(Chain Runtime Extension Library):** CREL is a library that lets developers 
+    creating low-level, native libraries using C++.
 
 Built-in Standard Libraries
 
 Chain now comes with powerful built-in modules:
 
+  - **Webview Engine (webview.):** Build Native Desktop Apps! Render modern UIs 
+    using HTML/CSS while using Chain as the high-performance backend.
   - **GUI Engine (gui_):** Powered by Raylib. Create windows, draw shapes, render
-    text, and handle mouse/keyboard inputs natively.
+    text, handle mouse/keyboard inputs natively, and use Scissor/Clipping modes.
   - **Audio Engine (audio.):** Stream MP3/WAV music or load multiple Sound Effects
-    (SFX) into RAM for game development.
+    (SFX) into RAM for game development. Includes Spectrum/EQ analysis.
   - **Networking (net.):** Low-level TCP socket support. Create clients, servers,
     send/receive data, and scan ports — cross-platform (Linux & Windows).
   - **System & OS (os., io.):** Execute shell commands (os.exec), read/write files,
     and manage environment variables.
-  - **Math & Strings (math., str.):** Random number generation, trigonometry, string
+  - **Math & Strings (math., str.):** Fully equipped for Scientific Computing 
+    (Trigonometry, Exponential, Logarithms), random number generation, string
     splitting, replacing, and trimming.
   - **XML Parsing(xml_):** Read and Write the parsed XML file and get values(**Basic Implementation**). 
 
@@ -115,7 +127,7 @@ on your system.
     ```
 2.  **Install Dependencies (Linux):**
 ```bash
-    sudo apt install libraylib-dev
+    sudo apt install libraylib-dev libwebkit2gtk-4.0-dev
 ```
 3.  **Build the project:**
 ```bash

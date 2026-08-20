@@ -2,28 +2,28 @@
 import "highlighter.chain"
 import "ui.chain"
 
-print("Memulai Chain-Editor...")
+print("Starting Chain-Editor...")
 gui_setup(1000, 700, "Chain-Editor IDE")
 gui_load_font("hack.ttf", 140)
 
 # ==========================================
-# STATE EDITOR (Data & Posisi)
+# EDITOR STATE (Data & Position)
 # ==========================================
 set lines = ["print(\"Hello World\")", "set x = 10", "if x > 5 {", "    print(x)", "}"]
-set cursorY = 0 # Baris (Y)
-set cursorX = 0 # Kolom (X)
+set cursorY = 0 # Line (Y)
+set cursorX = 0 # Column (X)
 set blinkTimer = 0.0
 
-# Konstanta Layout
+# Layout Constants
 set TOP_MARGIN = 40
 set LEFT_MARGIN = 60
 set LINE_HEIGHT = 22
 set FONT_SIZE = 18
 
-# Helper untuk mengukur lebar string sebagian (untuk kursor X)
+# Helper to measure partial string width (for cursor X position)
 func getCursorPixelX(text, colIndex, fontSize) {
     if colIndex == 0 { return LEFT_MARGIN }
-    # Ambil substring dari awal sampai posisi kursor
+    # Get substring from the beginning up to the cursor position
     set sub = str.substr(text, 0, colIndex)
     set w = gui_measure_text(sub, fontSize)
     return LEFT_MARGIN + w
@@ -37,43 +37,43 @@ while gui_running() {
     set screenH = gui.height()
 
     # ==========================================
-    # 1. LOGIKA INPUT (MENGETIK & NAVIGASI)
+    # 1. INPUT LOGIC (TYPING & NAVIGATION)
     # ==========================================
     
-    # A. Mengetik Huruf Biasa
+    # A. Typing Standard Characters
     set charCode = gui_get_char()
     while charCode > 0 {
-        set huruf = char(charCode)
+        set letter = char(charCode)
         set currentLine = lines[cursorY]
         
-        # Sisipkan huruf di posisi cursorX
+        # Insert character at cursorX position
         set leftPart = str.substr(currentLine, 0, cursorX)
         set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
         
-        set lines[cursorY] = leftPart + huruf + rightPart
+        set lines[cursorY] = leftPart + letter + rightPart
         set cursorX = cursorX + 1
         
-        # Ambil huruf selanjutnya (jika ngetik cepat)
+        # Fetch next character (in case of fast typing)
         set charCode = gui_get_char()
     }
 
-    # B. Tombol BACKSPACE
+    # B. BACKSPACE Key
     if gui_is_key_pressed("BACKSPACE") {
         set currentLine = lines[cursorY]
         
         if cursorX > 0 {
-            # Hapus 1 huruf sebelum kursor
+            # Delete 1 character before cursor
             set leftPart = str.substr(currentLine, 0, cursorX - 1)
             set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
             set lines[cursorY] = leftPart + rightPart
             set cursorX = cursorX - 1
         } else {
-            # Jika di ujung kiri, gabungkan dengan baris atasnya
+            # If at the far left, merge with the line above
             if cursorY > 0 {
                 set prevLine = lines[cursorY - 1]
                 set newCursorX = len(prevLine)
                 
-                # Gabungkan baris ini ke baris atas
+                # Merge this line into the line above
                 set lines[cursorY - 1] = prevLine + currentLine
                 list.remove(lines, cursorY)
                 
@@ -83,11 +83,11 @@ while gui_running() {
         }
     }
 
-    # C. Tombol ENTER
+    # C. ENTER Key
     if gui_is_key_pressed("ENTER") {
         set currentLine = lines[cursorY]
         
-        # Pecah baris menjadi dua bagian
+        # Split line into two parts
         set leftPart = str.substr(currentLine, 0, cursorX)
         set rightPart = str.substr(currentLine, cursorX, len(currentLine) - cursorX)
         
@@ -98,7 +98,7 @@ while gui_running() {
         list.insert(lines, cursorY, rightPart)
     }
 
-    # D. Navigasi Kursor (Panah Kiri, Kanan, Atas, Bawah)
+    # D. Cursor Navigation (Left, Right, Up, Down Arrows)
     if gui_is_key_pressed("LEFT") {
         if cursorX > 0 { set cursorX = cursorX - 1 }
         elif cursorY > 0 {
@@ -116,35 +116,35 @@ while gui_running() {
     if gui_is_key_pressed("UP") {
         if cursorY > 0 {
             set cursorY = cursorY - 1
-            # Jaga agar kursor X tidak melebihi panjang baris atas
+            # Ensure cursor X does not exceed the upper line length
             if cursorX > len(lines[cursorY]) { set cursorX = len(lines[cursorY]) }
         }
     }
     if gui_is_key_pressed("DOWN") {
         if cursorY < len(lines) - 1 {
             set cursorY = cursorY + 1
-            # Jaga agar kursor X tidak melebihi panjang baris bawah
+            # Ensure cursor X does not exceed the lower line length
             if cursorX > len(lines[cursorY]) { set cursorX = len(lines[cursorY]) }
         }
     }
 
     # ==========================================
-    # 2. RENDER AREA KODE (Di-clip)
+    # 2. RENDER CODE AREA (Clipped)
     # ==========================================
     gui_begin_clip(LEFT_MARGIN, TOP_MARGIN, screenW - LEFT_MARGIN, screenH - TOP_MARGIN - 25)
     
     for i in range(len(lines)) {
         set posY = TOP_MARGIN + (i * LINE_HEIGHT)
         
-        # Gambar Teks dengan SYNTAX HIGHLIGHTING
+        # Draw Text with SYNTAX HIGHLIGHTING
         drawHighlightedLine(LEFT_MARGIN, posY, lines[i], FONT_SIZE)
         
-        # Gambar Kursor (Blink)
+        # Draw Cursor (Blink)
         if i == cursorY {
-            # Gunakan fungsi math.sin() yang dikalikan waktu untuk membuat gelombang naik turun
+            # Use math.sin() multiplied by time to create an oscillating wave
             set blinkValue = math.sin(gui_get_time() * 5.0)
             
-            # Jika gelombang bernilai positif, tampilkan kursor
+            # If wave value is positive, display the cursor
             if blinkValue > 0.0 {
                 set px = getCursorPixelX(lines[i], cursorX, FONT_SIZE)
                 gui_rect(px, posY, 2, LINE_HEIGHT, "white")
@@ -153,30 +153,30 @@ while gui_running() {
     }
     gui_end_clip()
 
-    # Gambar Nomor Baris (Di luar clip agar tidak terpotong)
+    # Draw Line Numbers (Outside clip to prevent truncation)
     for i in range(len(lines)) {
         set posY = TOP_MARGIN + (i * LINE_HEIGHT)
         gui_text(LEFT_MARGIN - 40, posY, i + 1, "gray", 15)
     }
 
     # ==========================================
-    # 3. RENDER UI (Dari ui.chain)
+    # 3. RENDER UI (From ui.chain)
     # ==========================================
     drawTopMenu(screenW)
     drawSidebar(screenH)
     drawStatusBar(screenW, screenH, cursorY + 1, cursorX + 1)
 
     # ==========================================
-    # 4. LOGIKA COMPILE & RUN (F5)
+    # 4. COMPILE & RUN LOGIC (F5)
     # ==========================================
-    # Tekan 'R' untuk menjalankan kode yang ada di layar!
+    # Press 'R' to execute the code currently on screen!
     if gui_is_key_pressed("R") {
-        print("Menyimpan dan Menjalankan kode...")
+        print("Saving and Running code...")
         set codeText = str.merge(lines, "\n")
         io.write("temp_run.chain", codeText)
         
         set output = os.exec("./chainlang temp_run.chain")
-        print("--- OUTPUT PROGRAM ---")
+        print("--- PROGRAM OUTPUT ---")
         print(output)
     }
 

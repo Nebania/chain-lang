@@ -17,7 +17,7 @@ namespace SysAudio {
     void AudioProcessCallback(void *buffer, unsigned int frames) {
         float *samples = (float *)buffer;
         int channels = currentMusic.stream.channels;
-        if (channels <= 0) channels = 2; // Fallback aman
+        if (channels <= 0) channels = 2; 
 
         for (unsigned int i = 0; i < 256 && i < frames; i++) {
             audio_buffer[i] = samples[i * channels]; 
@@ -63,10 +63,7 @@ namespace SysAudio {
         }
         return false;
     }
-
-    // ==========================================
-    // UPDATE & KALKULASI FFT (Persis seperti kodemu)
-    // ==========================================
+    
     void update() { 
         if (!isMusicLoaded) return;
         UpdateMusicStream(currentMusic); 

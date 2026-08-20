@@ -1,38 +1,75 @@
-release_notes: |
-  # 🚀 ChainLang v0.6.1-beta (The "Robustness & Ecosystem" Update)
+---
 
-  This update marks one of the largest milestones in ChainLang’s development history. We have completely overhauled the core architecture of the *Parser* and *Runtime*, resolved critical bugs, and introduced industry-grade features.
+# 🚀 ChainLang v0.7.0 Full Release (The "Robustness & Ecosystem" Update)
 
-  ChainLang is no longer just a prototype scripting language; it is now a **production-ready programming language** designed for Scientific Computing, Interactive GUI Development, and Native Desktop Application Development!
+This update marks one of the largest milestones in ChainLang’s development history. We have completely overhauled the core architecture of the *Parser* and *Runtime*, resolved critical bugs, and introduced industry-grade features.
 
-  Here is the full list of new features, upgrades, and fixes included in this release:
+ChainLang is no longer just a prototype scripting language; it is now a **production-ready programming language** designed for Scientific Computing, Interactive GUI Development, and Native Desktop Application Development!
 
-  ## ✨ Major Features
+Here is the full list of new features, upgrades, and fixes included in this release:
 
-  ### 1. 🛡️ Visual Error Handling 
+## ✨ Major Features
 
-  Say goodbye to confusing crash logs! ChainLang now features an informative visual error-tracing system. When a *Syntax Error* or *Runtime Error* occurs, the engine does not silently fail; instead, it renders the exact line of code alongside caret indicators (`^^^`) pointing directly to the origin of the typo or error.
+### 1. 🛡️ Visual Error Handling 
 
-  ### 2. 🧵 Concurrency (Multithreading)
+Say goodbye to confusing crash logs! ChainLang now features an informative visual error-tracing system. When a *Syntax Error* or *Runtime Error* occurs, the engine does not silently fail; instead, it renders the exact line of code alongside caret indicators (`^^^`) pointing directly to the origin of the typo or error.
 
-  ChainLang now supports Asynchronous Programming! Using the new `thread.spawn(func)` module, long-running processes (such as intensive processing loops or network servers) can run on background threads. This ensures your primary thread (such as Raylib UI or Webview loops) remains smooth and responsive without freezing or lagging.
+### 2. 🧵 Concurrency (Multithreading)
 
-  ### 3. 🖥️ Native Desktop Apps (Webview Engine)
+ChainLang now supports Asynchronous Programming! Using the new `thread.spawn(func)` module, long-running processes (such as intensive processing loops or network servers) can run on background threads. This ensures your primary thread (such as Raylib UI or Webview loops) remains smooth and responsive without freezing or lagging.
 
-  Introducing our latest feature: native desktop application development (similar to VSCode or Discord architectures) directly within ChainLang!
+### 3. 🖥️ Native Desktop Apps (Webview Engine)
 
-  * Uses a modern architectural split: HTML/CSS for the UI, ChainLang/C++ for the backend.
-  * Supports bi-directional IPC: Invoke C++ functions from HTML, and inject dynamic JavaScript from C++ using `webview.eval()`.
-  * Lightweight runtime footprint by binding directly to native OS WebKit engines (avoiding bundled Chromium/Electron overhead).
+Introducing our latest feature: native desktop application development (similar to VSCode or Discord architectures) directly within ChainLang!
 
-  ### 4. 🧬 Advanced Object-Oriented Programming (OOP)
+* Uses a modern architectural split: HTML/CSS for the UI, ChainLang/C++ for the backend.
+* Supports bi-directional IPC: Invoke C++ functions from HTML, and inject dynamic JavaScript from C++ using `webview.eval()`.
+* Lightweight runtime footprint by binding directly to native OS WebKit engines (avoiding bundled Chromium/Electron overhead).
 
-  ChainLang's OOP model has been upgraded:
+### 4. 🧬 Advanced Object-Oriented Programming (OOP)
 
-  * **Inheritance:** Classes can now inherit properties and methods from parent classes using the `class Robot : Engine` syntax.
-  * **Magic Methods (Operator Overloading):** Implement special methods like `__add__` to allow native operator evaluation on objects (e.g., `obj1 + obj2`).
+ChainLang's OOP model has been upgraded:
 
-  ### 5. 🧩 Pattern Matching & Lambdas
+* **Inheritance:** Classes can now inherit properties and methods from parent classes using the `class Robot : Engine` syntax.
+* **Magic Methods (Operator Overloading):** Implement special methods like `__add__` to allow native operator evaluation on objects (e.g., `obj1 + obj2`).
 
-  * **Match Statement:** A cleaner, modern alternative to nested `if/elif` blocks for structural pattern branching.
-  * **First-Class Functions (Lambdas):** Functions can be assigned to variables and passed around as arguments via the `set myFunc = func(x) { ... }` syntax.
+### 5. 🧩 Pattern Matching & Lambdas
+
+* **Match Statement:** A cleaner, modern alternative to nested `if/elif` blocks for structural pattern branching.
+* **First-Class Functions (Lambdas):** Functions can be assigned to variables and passed around as arguments via the `set myFunc = func(x) { ... }` syntax.
+
+---
+
+## 🛠️ Standard Library Upgrades
+
+### 🧮 `math` Module (Scientific Computing Library)
+
+The math module has been refactored to use accurate double-precision floating-point arithmetic. ChainLang is now suited for baseline Data Science and Mathematical modeling!
+
+* **New:** Euler's constant `math.e()`.
+* **New (Inverse Trigonometry):** `asin`, `acos`, `atan`, `atan2`.
+* **New (Hyperbolic):** `sinh`, `cosh`, `tanh`.
+* **New (Exponential & Logarithmic):** `exp`, `log`, `log10`, `log2`.
+* **New (Utilities):** `ceil`, `floor`, `round`, `min`, `max`.
+
+### 🎨 `gui` Module (Raylib Enhancements)
+
+* **New:** `gui_line(x1, y1, x2, y2, thick, color)` for line rendering (useful for graph and vector visualizations).
+* **New:** `gui_begin_clip()` and `gui_end_clip()` for Scissor/Masking support, allowing scrollable regions inside custom UIs (such as Code Editors).
+* **Fixes:** The GUI coordinate system is now more accurate and handles window resizing events smoothly.
+
+---
+
+## 🐛 Bug Fixes & Optimizations
+
+* **[Lexer] Multiline Strings:** The lexer now correctly parses string literals across multiple lines (containing newlines/`\n`). Essential for embedding raw HTML or JSON templates.
+* **[Lexer] Escape Characters:** Resolved "Unterminated String" parsing issues. The lexer now handles standard escape sequences (like `\"`, `\n`, `\t`) properly.
+* **[Parser] Strict Mode & Fail-Fast:** The parser no longer ignores errors further down in execution files. Syntax errors are caught immediately during the parsing phase.
+* **[Parser] Whitespace handling in Try-Catch & Classes:** Fixed a bug where empty spaces or newlines between `try`/`catch` blocks or inside `class` declarations caused parse failures.
+* **[Runtime] `print` Function:** Resolved terminal buffer flushing bugs on Linux/macOS. Output sent via `print()` now flushes to the console in real-time with proper `\n` processing.
+* **[Runtime] `str.substr` Function:** Resolved an issue where the 3rd argument (length) was ignored by C++. String slicing is now fully accurate.
+* **[Runtime] `//` Comments:** Fixed an issue where the lexer occasionally interpreted `//` as a division operator sequence. Single-line comments are now strictly ignored.
+
+---
+
+**Thank you for using ChainLang! Keep innovating and building the future with us! 🌌**

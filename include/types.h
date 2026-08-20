@@ -47,7 +47,7 @@ struct Value {
     Value(std::shared_ptr<Dict> v) : as(v) {}
     Value(std::shared_ptr<LinkClass> v) : as(v) {}
     Value(std::shared_ptr<LinkInstance> v) : as(v) {}
-    Value(std::shared_ptr<LinkFunction> v) : as(v) {} // <--- Constructor baru
+    Value(std::shared_ptr<LinkFunction> v) : as(v) {} 
 };
 
 using Obj = Value;
@@ -95,7 +95,7 @@ inline void printObj(const Obj& val) {
         std::cout << "<Instance " << instance->klass->name << ">";
     }
     else if (std::holds_alternative<std::shared_ptr<LinkFunction>>(val.as)) {
-        std::cout << "<Function>"; // Simply print this to avoid circular dependency
+        std::cout << "<Function>";
     }
     else std::cout << "nil";
 }

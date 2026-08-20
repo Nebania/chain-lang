@@ -3,7 +3,6 @@
 #include <vector>
 #include <cstring>
 
-// Platform specific includes
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
@@ -37,8 +36,6 @@ namespace SysNet {
     int createSocket() {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock == INVALID_SOCKET) return -1;
-        
-        // [OPTIONAL] Set SO_REUSEADDR agar port bisa langsung dipakai ulang setelah stop
         int opt = 1;
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
         

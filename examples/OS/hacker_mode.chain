@@ -1,14 +1,14 @@
-# 1. Tulis konfigurasi tema ke sebuah file tersembunyi
-# Kita menggunakan kutip tunggal (') agar tidak bentrok dengan Lexer ChainLang
+# 1. Write the theme configuration to a hidden file
+# We use single quotes (') to prevent conflicts with the ChainLang Lexer
 set prompt_config = "export PS1='\n┌──(NEBULA-OS)\n└─► '"
 
-# io.write akan membuat file bernama .nebula_rc di folder saat ini
+# io.write will create a file named .nebula_rc in the current directory
 io.write(".nebula_rc", prompt_config)
 
-# 2. Buka bash interaktif dan suruh membaca file konfigurasi tersebut
+# 2. Launch an interactive bash shell and instruct it to read the configuration file
 sh "bash --rcfile .nebula_rc -i"
 
-# 3. Saat user mengetik 'exit' dan keluar dari Bash, hapus file konfigurasinya
+# 3. When the user types 'exit' and leaves Bash, clean up the configuration file
 io.remove(".nebula_rc")
 
 print(">>> Exiting Secret Mode...")

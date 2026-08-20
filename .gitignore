@@ -7,6 +7,7 @@ chainlang
 chainlang.exe
 make-2-one.sh
 error.txt 
+.chain_temp_ui.html
 .link_cache
 .env
 .env.local

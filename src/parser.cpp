@@ -119,7 +119,6 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
                 advance();
                 method = "cls";
             }
-            // Also add this block
             else if (peek().type == TokenType::INIT) {
                 advance();
                 method = "init";
@@ -281,7 +280,7 @@ std::unique_ptr<Expr> Parser::parsePostfix() {
         } 
         else if (match(TokenType::DOT)) {
             std::string name;
-            // Allow 'init' to be called as property/method
+
             if (match(TokenType::INIT)) {
                 name = "init";
             } else {
@@ -752,7 +751,7 @@ std::unique_ptr<Stmt> Parser::parseMatch() {
         
         MatchCase mCase;
         if (peek().type == TokenType::IDENTIFIER && peek().value == "_") {
-            advance(); // Consume '_'
+            advance(); 
             mCase.pattern = nullptr; 
         } else {
             mCase.pattern = parseExpression();

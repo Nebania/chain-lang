@@ -11,7 +11,7 @@ namespace SysMath {
     
     // Constants
     double pi();
-    double e(); // Bilangan Euler
+    double e(); // Euler
 
     // Inverse Trigonometry
     double asin(double val);

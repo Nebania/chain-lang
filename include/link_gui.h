@@ -36,7 +36,7 @@ namespace SysGui {
     void drawText(int x, int y, const std::string& text, const std::string& color, int size);
     void drawImage(const std::string& name, int x, int y, int width, int height);
 
-    // INPUT MOUSE ( 
+    // INPUT MOUSE 
     int getMouseX();
     int getMouseY();
     float getMouseWheel();

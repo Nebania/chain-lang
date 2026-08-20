@@ -38,7 +38,6 @@ public:
         for(int i = 0; i < currentIndent; i++) fullPrompt += "  ";
         std::cout << fullPrompt << std::flush;
 
-// --- MULAI RAW MODE (Aman) ---
 #ifndef _WIN32
         struct termios oldt, newt;
         tcgetattr(STDIN_FILENO, &oldt);
@@ -53,13 +52,13 @@ public:
             c = _getch();
             if (c == 0 || c == 224) {
                 int key = _getch();
-                if (key == 75) { // Panah Kiri
+                if (key == 75) { 
                     if (cursor > 0) { cursor--; std::cout << "\b" << std::flush; }
                 } 
-                else if (key == 77) { // Panah Kanan
+                else if (key == 77) { 
                     if (cursor < (int)buffer.length()) { std::cout << buffer[cursor] << std::flush; cursor++; }
                 }
-                else if (key == 72 || key == 80) { // Panah Atas & Bawah
+                else if (key == 72 || key == 80) { 
                     if (key == 72 && historyIdx > 0) historyIdx--;
                     else if (key == 80) {
                         if (historyIdx < (int)history.size() - 1) historyIdx++;
@@ -71,7 +70,7 @@ public:
                     std::cout << fullPrompt << buffer << std::flush;
                     cursor = buffer.length();
                 }
-                else if (key == 83) { // Tombol Delete
+                else if (key == 83) { 
                     if (cursor < (int)buffer.length()) {
                         buffer.erase(cursor, 1);
                         std::cout << buffer.substr(cursor) << " \b";
@@ -83,11 +82,11 @@ public:
             }
 #else
             c = getchar();
-            if (c == 27) { // ANSI Escape Sequence (Linux/macOS)
+            if (c == 27) { 
                 int c1 = getchar();
                 if (c1 == '[') {
                     int c2 = getchar();
-                    if (c2 == 'A') { // Panah Atas
+                    if (c2 == 'A') { 
                         if (historyIdx > 0) historyIdx--;
                         else continue;
 
@@ -96,7 +95,7 @@ public:
                         std::cout << fullPrompt << buffer << std::flush;
                         cursor = buffer.length();
                     }
-                    else if (c2 == 'B') { // Panah Bawah
+                    else if (c2 == 'B') { 
                         if (historyIdx < (int)history.size() - 1) historyIdx++;
                         else historyIdx = history.size();
 
@@ -105,13 +104,13 @@ public:
                         std::cout << fullPrompt << buffer << std::flush;
                         cursor = buffer.length();
                     }
-                    else if (c2 == 'C') { // Panah Kanan
+                    else if (c2 == 'C') { 
                         if (cursor < (int)buffer.length()) { std::cout << "\033[C" << std::flush; cursor++; }
                     }
-                    else if (c2 == 'D') { // Panah Kiri
+                    else if (c2 == 'D') { 
                         if (cursor > 0) { cursor--; std::cout << "\033[D" << std::flush; }
                     }
-                    else if (c2 == '3') { // Tombol Delete
+                    else if (c2 == '3') { 
                         if (getchar() == '~') { 
                             if (cursor < (int)buffer.length()) {
                                 buffer.erase(cursor, 1);

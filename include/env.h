@@ -5,7 +5,7 @@
 #include <memory>
 
 struct Environment {
-    std::shared_ptr<Environment> enclosing; // Berubah jadi shared_ptr
+    std::shared_ptr<Environment> enclosing;
     std::unordered_map<std::string, Obj> values;
 
     Environment(std::shared_ptr<Environment> enc = nullptr) : enclosing(enc) {}

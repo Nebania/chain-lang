@@ -40,7 +40,7 @@ namespace SysString {
             list.push_back(token);
             str.erase(0, pos + delimiter.length());
         }
-        list.push_back(str); // Sisa string terakhir
+        list.push_back(str); 
         return list;
     }
 
