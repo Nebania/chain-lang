@@ -62,7 +62,7 @@ stamp() {
 # to label drift (e.g. someone hand-edits it to "Beta Release") instead of
 # silently failing to match.
 stamp src/help.cpp \
-  '(Chain Version )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)' \
+  '(Chain Version v?)[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)' \
   "\1${VERSION} (${RELEASE_LABEL})" \
   "Chain Version ... (<any label>)"
 
@@ -79,18 +79,8 @@ stamp src/main.cpp \
   '\1'"${VERSION}"'\4' \
   "Nebania Chain v... (Analyzer)"
 
-# README.md
-#   Version   : 0.5 (Full Release)   -> or (Pre Release), (Beta Release), etc.
-#   Advanced Features (v0.5 Major Update)
-stamp README.md \
-  '(Version[[:space:]]*: )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)' \
-  "\1${VERSION} (${RELEASE_LABEL})" \
-  "Version   : ... (<any label>)"
-
-stamp README.md \
-  '(Advanced Features \(v)[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)?( Major Update\))' \
-  '\1'"${VERSION}"'\4' \
-  "Advanced Features (v... Major Update)"
+# README.md is not stamped — this script only touches src/help.cpp and
+# src/main.cpp.
 
 if [ "$FAILED" -ne 0 ]; then
   echo "error: one or more version patterns failed to match — aborting so a mismatched binary isn't built" >&2
@@ -98,4 +88,4 @@ if [ "$FAILED" -ne 0 ]; then
 fi
 
 echo "Done. Changed lines:"
-grep -n "$VERSION" src/help.cpp src/main.cpp README.md || true
+grep -n "$VERSION" src/help.cpp src/main.cpp || true
