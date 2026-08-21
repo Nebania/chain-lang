@@ -10,6 +10,14 @@ on:
         description: "Version to stamp into binaries (e.g. 0.6.0). Leave blank for a dev build."
         required: false
         default: ""
+      release_type:
+        description: "Release type"
+        required: false
+        type: choice
+        options:
+          - "Full Release"
+          - "Pre Release"
+        default: "Full Release"
 
 env:
   RAYLIB_VERSION: "5.5"
@@ -25,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
+      prerelease: ${{ steps.get_version.outputs.prerelease }}
     steps:
       - name: Determine version
         id: get_version
@@ -38,6 +47,24 @@ jobs:
           fi
           echo "Resolved version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Decide Full Release vs Pre Release.
+          # - Manual runs: honor the release_type input.
+          # - Tag pushes: treat SemVer pre-release tags (e.g. v0.6.0-rc1,
+          #   v0.6.0-beta.2) as a Pre Release automatically.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.release_type }}" = "Pre Release" ]; then
+              PRERELEASE=true
+            else
+              PRERELEASE=false
+            fi
+          elif [[ "$VERSION" == *-* ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+          echo "Prerelease: $PRERELEASE"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------
   # Linux x86_64
@@ -499,3 +526,4 @@ jobs:
             release-assets/*.tar.gz
             release-assets/SHA256SUMS.txt
           generate_release_notes: true
+          prerelease: ${{ needs.prepare.outputs.prerelease }}
