@@ -131,7 +131,7 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
                 name == "os"   || name == "str"  || name == "list" ||
                 name == "fs"   || name == "term" || name == "dict" ||
                 name == "net"  || name == "audio"|| name == "gui"  ||
-                name == "webview" || name == "thread") { 
+                name == "webview" || name == "thread" || name == "sync") { 
                 
                 name += "." + method;
                 isMethodCall = false;
@@ -213,11 +213,18 @@ std::unique_ptr<Expr> Parser::parseLogicAnd() {
 std::unique_ptr<Expr> Parser::parseEquality() {
     auto left = parseBitwise();
     while (match(TokenType::LT) || match(TokenType::GT) || 
+           match(TokenType::LE) || match(TokenType::GE) || 
            match(TokenType::EQ_EQ) || match(TokenType::BANG_EQ)) {
                
-        std::string op = tokens[current - 1].value;
+        std::string opStr = tokens[current - 1].value;
+        char op = opStr[0];
+        if (opStr == "<=") op = '{'; // Map <= to {
+        if (opStr == ">=") op = '}'; // Map >= to }
+        if (opStr == "==") op = '=';
+        if (opStr == "!=") op = '!';
+        
         auto right = parseBitwise(); 
-        left = std::make_unique<BinaryExpr>(op[0], std::move(left), std::move(right));
+        left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
     }
     return left;
 }
@@ -254,7 +261,7 @@ std::unique_ptr<Expr> Parser::parseAdditive() {
 
 std::unique_ptr<Expr> Parser::parseTerm() {
     auto left = parseUnary();
-    while (match(TokenType::STAR) || match(TokenType::SLASH)) {
+    while (match(TokenType::STAR) || match(TokenType::SLASH) || match(TokenType::MOD)) {
         char op = tokens[current - 1].value[0];
         auto right = parseUnary();
         left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
@@ -402,7 +409,8 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
             if (name == "time" || name == "math" || name == "io"   || 
                 name == "os"   || name == "str"  || name == "list" ||
                 name == "fs"   || name == "term" || name == "dict" ||
-                name == "net"  || name == "audio"|| name == "gui") {
+                name == "net"  || name == "audio"|| name == "gui"  ||
+                name == "webview" || name == "thread" || name == "sync") {
                 
                 name += "." + method; 
                 if (peek().type == TokenType::LPAREN) {
@@ -437,7 +445,8 @@ std::unique_ptr<Stmt> Parser::parseSet() {
     TokenType opType = peek().type; 
     if (opType != TokenType::ASSIGN && 
         opType != TokenType::PLUS_EQ && opType != TokenType::MINUS_EQ &&
-        opType != TokenType::STAR_EQ && opType != TokenType::SLASH_EQ) {
+        opType != TokenType::STAR_EQ && opType != TokenType::SLASH_EQ &&
+        opType != TokenType::MOD_EQ) { 
         throw std::runtime_error("Expected assignment operator ('=', '+=', '-=', etc)");
     }
     
@@ -448,6 +457,7 @@ std::unique_ptr<Stmt> Parser::parseSet() {
         if (opType == TokenType::MINUS_EQ) mathOp = '-';
         if (opType == TokenType::STAR_EQ)  mathOp = '*';
         if (opType == TokenType::SLASH_EQ) mathOp = '/';
+        if (opType == TokenType::MOD_EQ)   mathOp = '%';
         
         std::unique_ptr<Expr> leftSide = nullptr;
         if (auto v = dynamic_cast<VariableExpr*>(target.get())) {

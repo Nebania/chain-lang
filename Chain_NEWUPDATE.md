@@ -1,6 +1,6 @@
 ---
 
-# 🚀 ChainLang v0.7.0 Full Release (The "Robustness & Ecosystem" Update)
+# 🚀 ChainLang v0.7.1 Beta Release (The "Robustness & Ecosystem" Update)
 
 This update marks one of the largest milestones in ChainLang’s development history. We have completely overhauled the core architecture of the *Parser* and *Runtime*, resolved critical bugs, and introduced industry-grade features.
 

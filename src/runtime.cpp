@@ -41,6 +41,8 @@
 #include "link_audio.h"
 #include "link_webview.h"
 
+static std::mutex userSyncMutex; 
+
 bool isEqualObj(const Obj& a, const Obj& b) {
     if (a.as.index() != b.as.index()) return false;
     if (std::holds_alternative<int>(a.as)) return std::get<int>(a.as) == std::get<int>(b.as);
@@ -62,7 +64,7 @@ struct ProfilerTimer {
         if (active) {
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> diff = end - start;
-            // Hanya cetak jika memakan waktu lebih dari 0.01 ms agar terminal tidak terlalu penuh
+
             if (diff.count() > 0.01) {
                 std::cout << "\033[1;35m[Profiler]\033[0m Exec " << name 
                           << " took: \033[1;36m" << diff.count() << " ms\033[0m\n";
@@ -710,7 +712,7 @@ void Runtime::initNativeFunctions() {
             auto dict = std::get<std::shared_ptr<Dict>>(args[0].as);
             auto list = std::make_shared<List>();
             for (const auto& pair : *dict) {
-                list->push_back(Value(pair.first)); // Masukkan nama key ke dalam list
+                list->push_back(Value(pair.first)); 
             }
             return Obj(list);
         }
@@ -730,7 +732,7 @@ void Runtime::initNativeFunctions() {
         if (args.size() >= 2 && std::holds_alternative<std::shared_ptr<Dict>>(args[0].as)) {
             auto dict = std::get<std::shared_ptr<Dict>>(args[0].as);
             std::string key = objToString(args[1]);
-            return Obj(dict->erase(key) > 0); // Hapus key
+            return Obj(dict->erase(key) > 0); 
         }
         return Obj(false);
     };
@@ -960,11 +962,11 @@ void Runtime::initNativeFunctions() {
 
     nativeRegistry["audio.play"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.empty()) {
-            SysAudio::resume(); // If called without arguments, treat it as Resume
+            SysAudio::resume(); 
             return Obj(true);
         }
         std::string path = objToString(args[0]);
-        return Obj(SysAudio::play(path)); // Load dan Play lagu baru
+        return Obj(SysAudio::play(path)); 
     };
 
     nativeRegistry["audio.pause"] = [](const std::vector<Obj>& args) -> Obj {
@@ -1088,6 +1090,8 @@ void Runtime::initNativeFunctions() {
     nativeRegistry["thread.spawn"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.empty()) return Obj(false);
 
+        std::cout << "\033[1;33m[Chain]\033[0m You are Running a Multi-Thread Program" << std::endl;
+
         Obj callee = args[0];
  
         if (std::holds_alternative<std::shared_ptr<LinkFunction>>(callee.as)) {
@@ -1099,23 +1103,27 @@ void Runtime::initNativeFunctions() {
             }
 
             std::thread t([this, funcObj, threadArgs]() {
-                auto prevEnv = currentEnv;
-    
-                auto threadEnv = std::make_shared<Environment>(funcObj->closure);
+                Runtime threadRt;
+                threadRt.globalEnv = this->globalEnv;
+                threadRt.currentEnv = std::make_shared<Environment>(funcObj->closure); 
+                threadRt.nativeRegistry = this->nativeRegistry; 
+                
                 FuncDecl* fn = funcObj->declaration;
                 
                 for (size_t i = 0; i < fn->params.size(); ++i) {
-                    if (i < threadArgs.size()) threadEnv->define(fn->params[i], threadArgs[i]);
+                    if (i < threadArgs.size()) threadRt.currentEnv->define(fn->params[i], threadArgs[i]);
                 }
                 
-                auto tempEnv = currentEnv;
-                currentEnv = threadEnv;
                 try {
-                    for (auto& s : fn->body) runStatement(s.get());
+                    for (auto& s : fn->body) threadRt.runStatement(s.get());
+                } catch (const ReturnException&) {
+                } catch (const BreakException&) {
+                } catch (const ContinueException&) {
+                } catch (const std::exception& e) {
+                    std::cout << "\n\033[1;31m[Thread Error]\033[0m " << e.what() << "\n";
                 } catch (...) {
-                    
+                    std::cout << "\n\033[1;31m[Thread Error]\033[0m Unknown fatal error.\n";
                 }
-                currentEnv = tempEnv;
             });
             
             t.detach();
@@ -1126,8 +1134,20 @@ void Runtime::initNativeFunctions() {
         return Obj(false);
     };
 
+    nativeRegistry["sync.lock"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args;
+        userSyncMutex.lock(); 
+        return Obj(true);
+    };
+
+    nativeRegistry["sync.unlock"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args;
+        userSyncMutex.unlock(); 
+        return Obj(true);
+    };
+
     // ==========================================
-    // 13. WEBVIEW MODULE (NATIVE DESKTOP APPS)
+    // 13. WEBVIEW MODULE (NATIVE DESKTOP WEBAPP)
     // ==========================================
     nativeRegistry["webview.show"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.size() < 4) {
@@ -1135,9 +1155,10 @@ void Runtime::initNativeFunctions() {
             return Obj(false);
         }
         
+        // Default Display Resolution Value 
         std::string title = objToString(args[0]);
-        int width = 800;
-        int height = 600;
+        int width = 640;
+        int height = 480;
         
         if (std::holds_alternative<int>(args[1].as)) width = std::get<int>(args[1].as);
         else if (std::holds_alternative<double>(args[1].as)) width = (int)std::get<double>(args[1].as);
@@ -1151,6 +1172,7 @@ void Runtime::initNativeFunctions() {
         
         return Obj(true);
     };
+
     nativeRegistry["webview.eval"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.empty()) return Obj(false);
         std::string js = objToString(args[0]);
@@ -1391,6 +1413,7 @@ Obj Runtime::evaluateExpr(Expr* expr) {
                 else if (bin->op == '-') magicName = "__sub__";
                 else if (bin->op == '*') magicName = "__mul__";
                 else if (bin->op == '/') magicName = "__div__";
+                else if (bin->op == '%') magicName = "__mod__";
                 else if (bin->op == '=') magicName = "__eq__";
 
                 if (!magicName.empty()) {
@@ -1442,7 +1465,9 @@ Obj Runtime::evaluateExpr(Expr* expr) {
                 switch (bin->op) {
                     case '+': return Obj(l + r); case '-': return Obj(l - r); case '!': return Obj(l != r); 
                     case '*': return Obj(l * r); case '/': return Obj((r != 0) ? l / r : 0);
+                    case '%': return Obj((r != 0) ? l % r : 0); 
                     case '<': return Obj(l < r); case '>': return Obj(l > r); case '=': return Obj(l == r);
+                    case '{': return Obj(l <= r); case '}': return Obj(l >= r); 
                 }
             } else if ((std::holds_alternative<double>(left.as)||std::holds_alternative<int>(left.as)) && (std::holds_alternative<double>(right.as)||std::holds_alternative<int>(right.as))) {
                 double l = std::holds_alternative<int>(left.as)?std::get<int>(left.as):std::get<double>(left.as);
@@ -1450,7 +1475,9 @@ Obj Runtime::evaluateExpr(Expr* expr) {
                 switch (bin->op) {
                     case '+': return Obj(l + r); case '-': return Obj(l - r); case '!': return Obj(l != r); 
                     case '*': return Obj(l * r); case '/': return Obj((r != 0.0) ? l / r : 0.0);
+                    case '%': return Obj((r != 0.0) ? std::fmod(l, r) : 0.0);
                     case '<': return Obj(l < r); case '>': return Obj(l > r); case '=': return Obj(l == r);
+                    case '{': return Obj(l <= r); case '}': return Obj(l >= r);
                 }
             } else if (std::holds_alternative<std::string>(left.as) && std::holds_alternative<std::string>(right.as)) {
                 if (bin->op == '=') return Obj(std::get<std::string>(left.as) == std::get<std::string>(right.as));
@@ -1667,11 +1694,21 @@ void Runtime::runStatement(Stmt* stmt) {
         return;
     }
     if (auto imp = dynamic_cast<ImportStmt*>(stmt)) {
-		 std::string path = imp->path;
+         std::string path = imp->path;
          if (!Sys::fileExists(path)) {
              std::cout << "Runtime Error: Cannot import '" << path << "'. File not found.\n";
              return;
          }
+
+         std::error_code ec;
+         std::string absPath = fs::absolute(path, ec).string();
+         if (ec) absPath = path; 
+         if (importedFiles.find(absPath) != importedFiles.end()) {
+             return; 
+         }
+
+         importedFiles.insert(absPath);
+
          std::string source = Sys::readFile(path);
          Lexer lexer(source);
          auto tokens = lexer.tokenize();
@@ -1744,7 +1781,7 @@ void Runtime::runStatement(Stmt* stmt) {
             for (size_t i = 0; i < int_vars.size(); i++) {
                 out << "#define LINK_" << int_vars[i] << " (((int*)link_shm)[" << i << "])\n";
             }
-            // Memori Double di offset 2048 - 4095
+            
             for (size_t i = 0; i < double_vars.size(); i++) {
                 out << "#define LINK_" << double_vars[i] << " (((double*)((char*)link_shm + 2048))[" << i << "])\n";
             }

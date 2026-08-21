@@ -176,30 +176,56 @@ std::vector<Token> Lexer::tokenize() {
                         
                         std::string rawCode = "";
                         int braceCount = 1;
- 
+                        bool inString = false;
+                        bool inChar = false;
+                        bool inLineComment = false;
+                        bool inBlockComment = false;
+                        
                         while (braceCount > 0 && pos < src.size()) {
-                            char nextChar = peek();
- 
-                            if (nextChar == '"') {
-                                rawCode += advance();
-                                while(peek() != '"' && pos < src.size()) {
-                                    if (peek() == '\\') rawCode += advance();
-                                    rawCode += advance();
-                                }
-                                if (peek() == '"') rawCode += advance();
+                            char c = peek();
+                            char nextC = (pos + 1 < src.size()) ? src[pos + 1] : '\0';
+
+                            if (c == '\n') {
+                                line++; column = 1;
+                                inLineComment = false; 
+                            }
+                            if (!inString && !inChar && !inBlockComment && c == '/' && nextC == '/') {
+                                inLineComment = true;
+                            }
+                            if (!inString && !inChar && !inLineComment && c == '/' && nextC == '*') {
+                                inBlockComment = true;
+                            }
+                            if (inBlockComment && c == '*' && nextC == '/') {
+                                rawCode += advance(); 
+                                rawCode += advance(); 
+                                inBlockComment = false;
                                 continue;
                             }
-                            
-                            if (nextChar == '{') braceCount++;
-                            else if (nextChar == '}') {
-                                braceCount--;
-                                if (braceCount == 0) break; 
+
+                            if (!inLineComment && !inBlockComment) {
+                                if (c == '"' && !inChar) {
+                                    if (rawCode.empty() || rawCode.back() != '\\') {
+                                        inString = !inString;
+                                    }
+                                }
+                                else if (c == '\'' && !inString) {
+                                    if (rawCode.empty() || rawCode.back() != '\\') {
+                                        inChar = !inChar;
+                                    }
+                                }
+                            }
+
+                            if (!inString && !inChar && !inLineComment && !inBlockComment) {
+                                if (c == '{') braceCount++;
+                                else if (c == '}') {
+                                    braceCount--;
+                                    if (braceCount == 0) break; 
+                                }
                             }
                             
-                            if (nextChar == '\n') { line++; column = 1; }
                             rawCode += advance();
                         }
-   
+                        
                         tokens.push_back(makeToken(TokenType::STRING, rawCode));
                         
                         if (peek() == '}') {
@@ -215,14 +241,17 @@ std::vector<Token> Lexer::tokenize() {
         if (c == '"') { tokens.push_back(stringLiteral()); continue; }
         if (c == '\'') { /* Existing single-quote char logic... */ }
 
-        // --- ADDITIONAL LEGAL C++ SYMBOLS TO AVOID UNKNOWN CHAR ---
         if (c == ';') { advance(); tokens.push_back(makeToken(TokenType::SEMICOLON, ";")); continue; }
-        if (c == '%') { advance(); tokens.push_back(makeToken(TokenType::IDENTIFIER, "%")); continue; }
+        if (c == '%') { 
+            advance(); 
+            if (match('=')) tokens.push_back(makeToken(TokenType::MOD_EQ, "%="));
+            else tokens.push_back(makeToken(TokenType::MOD, "%")); 
+            continue; 
+        }
         if (c == '~') { advance(); tokens.push_back(makeToken(TokenType::IDENTIFIER, "~")); continue; }
         if (c == '?') { advance(); tokens.push_back(makeToken(TokenType::IDENTIFIER, "?")); continue; }
         if (c == '\\') { advance(); tokens.push_back(makeToken(TokenType::IDENTIFIER, "\\")); continue; }
         if (c == '$') { advance(); tokens.push_back(makeToken(TokenType::IDENTIFIER, "$")); continue; }
-        // ---------------------------------------------------------
         
         if (c == '!') {
             advance();
@@ -251,7 +280,7 @@ std::vector<Token> Lexer::tokenize() {
         if (c == '<') {
             advance();
             if (match('<')) tokens.push_back(makeToken(TokenType::LSHIFT, "<<"));
-            else if (match('=')) tokens.push_back(makeToken(TokenType::LT, "<=")); // If you implement LE later
+            else if (match('=')) tokens.push_back(makeToken(TokenType::LT, "<=")); //  i'm forgot about this :") 
             else tokens.push_back(makeToken(TokenType::LT, "<"));
             continue;
         }
@@ -259,7 +288,7 @@ std::vector<Token> Lexer::tokenize() {
         if (c == '>') {
             advance();
             if (match('>')) tokens.push_back(makeToken(TokenType::RSHIFT, ">>"));
-            else if (match('=')) tokens.push_back(makeToken(TokenType::GT, ">=")); // If you implement GE later
+            else if (match('=')) tokens.push_back(makeToken(TokenType::GT, ">=")); 
             else tokens.push_back(makeToken(TokenType::GT, ">"));
             continue;
         }

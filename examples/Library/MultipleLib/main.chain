@@ -1,0 +1,5 @@
+import "file_c.chain"
+import "file_b.chain" 
+
+print("Main Executed")
+print("C = " + str(c_value)) 

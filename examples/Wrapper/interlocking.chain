@@ -1,0 +1,36 @@
+# This principle basically runs like ISR (Interrupt Service Routine) 
+# If you need a multi-program that needs to run together, 
+# if you are running a Network Module and GUI module in the same program 
+# it will make the GUI look laggy, in cases like using Network: waiting for a connection 
+# so this Thread was created to avoid those cases. 
+
+
+print("=== TESTING DATA RACE & THREAD SAFETY ===")
+
+set bank_balance = 100
+
+func withdrawMoney() {
+    # Lock memory so other threads cannot enter this block
+    sync.lock()
+    
+    print("Thread attempting to withdraw money...")
+    if bank_balance >= 100 {
+        time.sleep(500) # Simulate bank network delay
+        set bank_balance = bank_balance - 100
+        print("Withdrawal successful! Remaining balance: " + bank_balance)
+    } else {
+        print("Failed! Insufficient balance.")
+    }
+    
+    # Release lock so other threads can proceed
+    sync.unlock()
+}
+
+# Run 3 withdrawals concurrently (Competing!)
+thread.spawn(withdrawMoney)
+thread.spawn(withdrawMoney)
+thread.spawn(withdrawMoney)
+
+# Hold main program execution
+time.sleep(2000)
+print("Finished.")

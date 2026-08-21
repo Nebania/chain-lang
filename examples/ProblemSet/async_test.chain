@@ -15,7 +15,7 @@ func runServer() {
 # 2. Server Run on seperate thread
 thread.spawn(runServer)
 
-// 3. GUI run on main thread
+# 3. GUI run on main thread
 # Change // to # , fixing the problem :D
 gui_setup(400, 300, "ChainLang Async Test")
 

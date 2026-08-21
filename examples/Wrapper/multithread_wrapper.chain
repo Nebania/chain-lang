@@ -16,7 +16,7 @@ func worker() {
     print("Finished! Final Result: " + data)
 }
 
-thread.spawn(worker)
+th.spawn(worker)
 
 # because the process is so fast, its need delay :) 
 time.sleep(100)

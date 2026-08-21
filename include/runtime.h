@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set> 
 #include <functional>
 #include <variant>
 #include "types.h"
@@ -25,6 +26,7 @@ private:
     std::unordered_map<std::string, FuncDecl*> functionRegistry;
 
     std::vector<std::unique_ptr<Program>> loadedPrograms;
+    std::unordered_set<std::string> importedFiles; 
 
     // Helper Functions
     void initNativeFunctions();

@@ -1,0 +1,8 @@
+# Modulo Testing 
+
+print(10 % 3)      # Output: 1
+print(10.5 % 3)    # Output: 1.5
+
+set x = 15
+set x %= 4
+print(x)           # Output: 3
