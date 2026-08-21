@@ -8,7 +8,7 @@
                   "Link your files with Chain!"
 ============= A Nebania Project =============
 ---------------------------------------------------------------------------
-Version   : 0.7.0 (Full Release) 
+Version   : 0.7.0 (Pre Release) 
 Creator   : Pilot0253
 Developer : LoGoRo17 && Tohar777
 PROJECT   : Chain (Interpreter)
