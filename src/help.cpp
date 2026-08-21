@@ -2,7 +2,7 @@
 #include <iostream>
 
 void printVersion() {
-    std::cout << "Chain Version 0.6.1-beta (Beta Release) \n" << std::endl;
+    std::cout << "Chain Version v0.7.0-beta (Pre Release) \n" << std::endl;
 } 
 
 void printHelp() {
