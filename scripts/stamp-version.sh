@@ -53,22 +53,23 @@ stamp() {
 }
 
 # src/help.cpp
-#   Chain Version 0.5.2 (Full Release)   -> or (Pre Release)
-#   NEBANIA CHAIN v0.5 (Full Release) HELP -> or (Pre Release) HELP
+#   Chain Version 0.5.2 (Full Release)   -> or (Pre Release), (Beta Release), etc.
+#   NEBANIA CHAIN v0.5 (Full Release) HELP -> or any other label. This literally was a nightmare to deal with.
 #
-# The version-label suffix is matched as EITHER "(Full Release)" or
-# "(Pre Release)" (whichever is currently stamped), and rewritten using
-# the RELEASE_LABEL requested for this run — so re-stamping a beta after
-# a full release (or vice versa) works correctly.
+# The parenthesized label is matched as WHATEVER text is currently there
+# (not just "Full Release"/"Pre Release" literally) and overwritten with
+# the RELEASE_LABEL requested for this run. This makes stamping resilient
+# to label drift (e.g. someone hand-edits it to "Beta Release") instead of
+# silently failing to match.
 stamp src/help.cpp \
-  '(Chain Version )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \((Full Release|Pre Release)\)' \
+  '(Chain Version )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)' \
   "\1${VERSION} (${RELEASE_LABEL})" \
-  "Chain Version ... (Full Release|Pre Release)"
+  "Chain Version ... (<any label>)"
 
 stamp src/help.cpp \
-  '(NEBANIA CHAIN v)[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \((Full Release|Pre Release)\)( HELP)' \
-  "\1${VERSION} (${RELEASE_LABEL})\5" \
-  "NEBANIA CHAIN v... (Full Release|Pre Release) HELP"
+  '(NEBANIA CHAIN v)[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)( HELP)' \
+  "\1${VERSION} (${RELEASE_LABEL})\4" \
+  "NEBANIA CHAIN v... (<any label>) HELP"
 
 # src/main.cpp
 #   Nebania Chain v0.5 (Analyzer)
@@ -79,12 +80,12 @@ stamp src/main.cpp \
   "Nebania Chain v... (Analyzer)"
 
 # README.md
-#   Version   : 0.5 (Full Release)   -> or (Pre Release)
+#   Version   : 0.5 (Full Release)   -> or (Pre Release), (Beta Release), etc.
 #   Advanced Features (v0.5 Major Update)
 stamp README.md \
-  '(Version[[:space:]]*: )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \((Full Release|Pre Release)\)' \
+  '(Version[[:space:]]*: )[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)? \([^()]*\)' \
   "\1${VERSION} (${RELEASE_LABEL})" \
-  "Version   : ... (Full Release|Pre Release)"
+  "Version   : ... (<any label>)"
 
 stamp README.md \
   '(Advanced Features \(v)[0-9]+(\.[0-9]+)*(-[A-Za-z0-9.]+)?( Major Update\))' \
