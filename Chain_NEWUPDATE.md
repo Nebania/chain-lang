@@ -6,7 +6,7 @@ This update marks one of the largest milestones in ChainLang’s development his
 
 ChainLang is no longer just a prototype scripting language; it is now a **production-ready programming language** designed for Scientific Computing, Interactive GUI Development, and Native Desktop Application Development!
 
-Here is the full list of new features, upgrades, and fixes included in this release:
+Here is the full list of new features, upgrades, and fixes included in this release...
 
 ## ✨ Major Features
 
