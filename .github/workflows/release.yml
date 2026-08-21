@@ -34,6 +34,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       prerelease: ${{ steps.get_version.outputs.prerelease }}
+      release_label: ${{ steps.get_version.outputs.release_label }}
     steps:
       - name: Determine version
         id: get_version
@@ -66,6 +67,14 @@ jobs:
           echo "Prerelease: $PRERELEASE"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
 
+          if [ "$PRERELEASE" = "true" ]; then
+            RELEASE_LABEL="Pre Release"
+          else
+            RELEASE_LABEL="Full Release"
+          fi
+          echo "Release label: $RELEASE_LABEL"
+          echo "release_label=$RELEASE_LABEL" >> "$GITHUB_OUTPUT"
+
   # ---------------------------------------------------------------------
   # Linux x86_64
   # ---------------------------------------------------------------------
@@ -78,7 +87,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Stamp version (${{ needs.prepare.outputs.version }})
-        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}"
+        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}" "${{ needs.prepare.outputs.release_label }}"
 
       - name: Install build + X11/GL dev deps
         run: |
@@ -147,7 +156,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Stamp version (${{ needs.prepare.outputs.version }})
-        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}"
+        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}" "${{ needs.prepare.outputs.release_label }}"
 
       - name: Install build + X11/GL dev deps
         run: |
@@ -216,7 +225,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Stamp version (${{ needs.prepare.outputs.version }})
-        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}"
+        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}" "${{ needs.prepare.outputs.release_label }}"
 
       - name: Enable i386 + install dependencies
         run: |
@@ -288,7 +297,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Stamp version (${{ needs.prepare.outputs.version }})
-        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}"
+        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}" "${{ needs.prepare.outputs.release_label }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -370,7 +379,7 @@ jobs:
 
       - name: Stamp version (${{ needs.prepare.outputs.version }})
         shell: bash
-        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}"
+        run: bash scripts/stamp-version.sh "${{ needs.prepare.outputs.version }}" "${{ needs.prepare.outputs.release_label }}"
 
       # MSYS2 provides MinGW64 GCC and make
       - name: Setup MSYS2
