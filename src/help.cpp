@@ -8,7 +8,7 @@ void printVersion() {
 void printHelp() {
     std::cout << R"(
 ========================================================
-           NEBANIA CHAIN v0.6.1-beta (Beta Release) HELP
+           NEBANIA CHAIN v0.7.0 (Pre Release) HELP
 ========================================================
 History:
 Created by   : Pilot0253
