@@ -6,8 +6,10 @@ BINPATH  := $(abspath $(TARGET))
 SRCDIR   := src
 OBJDIR   := obj
 
-CXXFLAGS += $(shell pkg-config --cflags gtk+-3.0 webkit2gtk-4.1 javascriptcoregtk-4.1)
-LDFLAGS  += $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.1 javascriptcoregtk-4.1)
+ifeq (,$(findstring CHAIN_DISABLE_WEBVIEW,$(CXXFLAGS)))
+    CXXFLAGS += $(shell pkg-config --cflags gtk+-3.0 webkit2gtk-4.1 javascriptcoregtk-4.1)
+    LDFLAGS  += $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.1 javascriptcoregtk-4.1)
+endif
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS := $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))

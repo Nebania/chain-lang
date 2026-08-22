@@ -248,9 +248,8 @@ jobs:
             libxcursor-dev:i386 \
             libxinerama-dev:i386 \
             libxxf86vm-dev:i386 \
-            libgtk-3-dev:i386 \
-            libwebkit2gtk-4.1-dev:i386
-
+            libgtk-3-dev:i386
+            
       - name: Build raylib
         run: |
           git clone --depth 1 --branch ${{ env.RAYLIB_VERSION }} \
@@ -274,7 +273,7 @@ jobs:
       - name: Build chainlang
         run: |
           make release \
-            CXXFLAGS="-std=c++17 -Wall -Wextra -I./include -m32" \
+            CXXFLAGS="-std=c++17 -Wall -Wextra -I./include -m32 -DCHAIN_DISABLE_WEBVIEW" \
             LDFLAGS="-lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -m32"
 
       - name: Package
@@ -403,6 +402,7 @@ jobs:
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-webview2
 
       # ---------------------------------------------------------------
       # Build raylib for Windows

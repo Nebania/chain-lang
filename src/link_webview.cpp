@@ -1,3 +1,5 @@
+#ifndef CHAIN_DISABLE_WEBVIEW
+
 #include "link_webview.h"
 #include "webview.h"
 #include <iostream>
@@ -51,3 +53,5 @@ namespace SysWebview {
         }
     }
 }
+
+#endif

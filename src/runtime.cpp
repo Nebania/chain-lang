@@ -39,7 +39,10 @@
 #include "link_wrapper.h"
 #include "link_xml.h"
 #include "link_audio.h"
+
+#ifndef CHAIN_DISABLE_WEBVIEW
 #include "link_webview.h"
+#endif
 
 static std::mutex userSyncMutex; 
 
@@ -1149,6 +1152,7 @@ void Runtime::initNativeFunctions() {
     // ==========================================
     // 13. WEBVIEW MODULE (NATIVE DESKTOP WEBAPP)
     // ==========================================
+#ifndef CHAIN_DISABLE_WEBVIEW
     nativeRegistry["webview.show"] = [this](const std::vector<Obj>& args) -> Obj {
         if (args.size() < 4) {
             std::cout << "Runtime Error: webview.show butuh 4 argumen (title, width, height, html)\n";
@@ -1172,6 +1176,14 @@ void Runtime::initNativeFunctions() {
         
         return Obj(true);
     };
+#else
+    // Exception for Linux - i686
+    nativeRegistry["webview.show"] = [](const std::vector<Obj>& args) -> Obj {
+        (void)args;
+        std::cout << "Runtime Error: Webview module is not supported on 32-bit (i686) systems.\n";
+        return Obj(false);
+    };
+#endif
 }
 
 bool Runtime::isTruthy(const Obj& o) {
