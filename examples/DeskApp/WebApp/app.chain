@@ -1,19 +1,66 @@
-print("=== Starting Application ===")
+print("=== Starting ChainLang Desktop App ===")
 
-# 1. Read UI from an external file! (Very clean)
-set ui = io.read("index.html")
+set app_status = "Waiting for connection..."
+set app_color = "#a6adc8"
 
-# 2. Create a background function to reply to UI messages
-func logicBackend() {
-    # Wait 2 seconds so the Webview has time to open
-    time.sleep(2000) 
+func runLocalServer() {
+    print("[Server] Starting API Server on port 8080...")
+    set sock = net.server(8080)
     
-    # Execute JavaScript from ChainLang!
-    webview.eval("updateStatus('ChainLang Backend Ready!')")
+    while true {
+        set client = net.accept(sock)
+        set request = net.recv(client)
+        
+        if len(request) > 0 {
+            if str.contains(request, "GET /status") {
+                set json = "{\"text\": \"" + app_status + "\", \"color\": \"" + app_color + "\"}"
+                set response = "HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\n" + json
+                net.send(client, response)
+            }
+            elif str.contains(request, "POST /message") {
+                set parts = str.split(request, "\r\n\r\n")
+                set userMessage = ""
+                
+                if len(parts) > 1 {
+                    set userMessage = parts[1]
+                }
+                
+                print("[Server] Received: " + userMessage)
+                
+                set app_status = "Processing: " + userMessage
+                set app_color = "#f9e2af"
+                
+                set response = "HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\n\nOK"
+                net.send(client, response)
+                
+                func processReply() {
+                    time.sleep(1500)
+                    
+                    if str.contains(str.lower(userMessage), "hello") {
+                        set app_status = "Hello from ChainLang!"
+                    } elif str.contains(str.lower(userMessage), "who") {
+                        set app_status = "I am the C++ Backend."
+                    } else {
+                        set app_status = "Message received: " + userMessage
+                    }
+                    set app_color = "#89b4fa"
+                }
+                thread.spawn(processReply)
+            }
+        }
+        net.close(client)
+    }
 }
 
-# Run logic in the background so it doesn't block the UI
-thread.spawn(logicBackend)
+thread.spawn(runLocalServer)
 
-# 3. Show UI
-webview.show("Clean Architecture Application", 800, 600, ui)
+func simulateBackendInit() {
+    time.sleep(2000)
+    set app_status = "ChainLang Backend Ready!"
+    set app_color = "#89b4fa"
+    print("[Backend] Initialization complete.")
+}
+thread.spawn(simulateBackendInit)
+
+set ui = io.read("index.html")
+webview.show("ChainLang Application", 800, 600, ui)

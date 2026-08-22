@@ -1,42 +1,99 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChainLang Desktop</title>
     <style>
-        body { background-color: #1e1e2e; color: #cdd6f4; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .container { background-color: #181825; padding: 40px; border-radius: 12px; text-align: center; width: 80%; max-width: 400px; }
+        body { 
+            background-color: #1e1e2e; 
+            color: #cdd6f4; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .container { 
+            background-color: #181825; 
+            padding: 40px; 
+            border-radius: 12px; 
+            text-align: center; 
+            width: 80%; 
+            max-width: 400px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
         h1 { color: #89b4fa; margin-top: 0; }
-        input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #45475a; background: #313244; color: white; margin-bottom: 20px; box-sizing: border-box; }
-        button { background-color: #89b4fa; color: #11111b; font-weight: bold; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            border: 1px solid #45475a; 
+            background: #313244; 
+            color: white; 
+            margin-bottom: 20px; 
+            box-sizing: border-box; 
+            outline: none;
+        }
+        input:focus { border-color: #89b4fa; }
+        button { 
+            background-color: #89b4fa; 
+            color: #11111b; 
+            font-weight: bold; 
+            border: none; 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: background 0.2s;
+        }
         button:hover { background-color: #b4befe; }
-        #status { margin-top: 20px; color: #a6e3a1; font-weight: bold; }
+        #status { 
+            margin-top: 20px; 
+            font-weight: bold; 
+            min-height: 24px;
+        }
     </style>
 </head>
 <body>
-    <div class='container'>
+    <div class="container">
         <h1>ChainLang Desktop</h1>
-        <input type='text' id='messageInput' placeholder='Type a message...'>
-        <button onclick='sendData()'>Send to Backend</button>
-        
-        <!-- Area to receive reply from ChainLang -->
-        <div id='status'></div>
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send to Backend</button>
+        <div id="status">Loading...</div>
     </div>
 
     <script>
-        function sendData() {
-            let message = document.getElementById('messageInput').value;
-            if (message.trim() === '') return;
+        async function sendMessage() {
+            let msg = document.getElementById('messageInput').value;
+            if (msg.trim() === '') return;
             
-            // Send to C++
-            chain_print(message);
-            
-            document.getElementById('messageInput').value = '';
             document.getElementById('status').innerText = 'Sending...';
+            document.getElementById('status').style.color = '#f9e2af';
+            
+            try {
+                await fetch('http://127.0.0.1:8080/message', { method: 'POST', body: msg });
+                document.getElementById('messageInput').value = '';
+            } catch (e) {
+                console.error("Failed to send message:", e);
+            }
         }
 
-        // This function will be called by ChainLang from the Backend!
-        function updateStatus(reply) {
-            document.getElementById('status').innerText = reply;
-        }
+        setInterval(async function() {
+            try {
+                let response = await fetch('http://127.0.0.1:8080/status');
+                let data = await response.json();
+                
+                document.getElementById('status').innerText = data.text;
+                document.getElementById('status').style.color = data.color;
+            } catch (e) {
+                // Ignore connection errors during startup
+            }
+        }, 500);
     </script>
 </body>
 </html>
