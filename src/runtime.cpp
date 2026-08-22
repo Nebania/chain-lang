@@ -1172,13 +1172,6 @@ void Runtime::initNativeFunctions() {
         
         return Obj(true);
     };
-
-    nativeRegistry["webview.eval"] = [this](const std::vector<Obj>& args) -> Obj {
-        if (args.empty()) return Obj(false);
-        std::string js = objToString(args[0]);
-        SysWebview::eval(js);
-        return Obj(true);
-    };
 }
 
 bool Runtime::isTruthy(const Obj& o) {

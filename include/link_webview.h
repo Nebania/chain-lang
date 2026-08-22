@@ -13,5 +13,6 @@
 
 namespace SysWebview {
     WEBVIEW_API void create(const std::string& title, int width, int height, const std::string& html);
-    WEBVIEW_API void eval(const std::string& js);
+    
 }
+
