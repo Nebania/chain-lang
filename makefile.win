@@ -1,7 +1,8 @@
 CXX      := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -I./include
-LDFLAGS  := -lraylib -lopengl32 -lm -lws2_32
-TARGET   := chainlang
+
+LDFLAGS  := -lraylib -lgdi32 -lwinmm -lws2_32 -lole32 -loleaut32 -ladvapi32 -lversion -luuid -lwebview2loader -static-libgcc -static-libstdc++
+TARGET   := chainlang.exe
 BINPATH  := $(abspath $(TARGET))
 SRCDIR   := src
 OBJDIR   := obj
@@ -9,7 +10,7 @@ OBJDIR   := obj
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS := $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 
-.PHONY: all build clean run debug release install
+.PHONY: all build clean run debug release
 
 all: build
 
@@ -36,13 +37,6 @@ release: build
 
 run: build
 	@./$(TARGET)
-
-install: release
-	@ln -sf "$(BINPATH)" /usr/local/bin/chainlang
-	@ln -sf "$(BINPATH)" /usr/local/bin/chain
-	@echo "Linked /usr/local/bin/chainlang -> $(BINPATH)"
-	@echo "Linked /usr/local/bin/chain -> $(BINPATH)"
-	@echo "The binary stays in this folder — don't move or delete it, or the symlinks will break."
 
 clean:
 	@rm -rf $(OBJDIR) $(TARGET) error.txt
